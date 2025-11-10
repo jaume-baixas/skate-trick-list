@@ -10,32 +10,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubunt
 .container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:30px;}
 h1{color:#1F2937;margin-bottom:10px;font-size:2em}
 .subtitle{color:#6B7280;margin-bottom:30px;font-size:0.95em}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-th,td{padding:10px;border:1px solid #E5E7EB;text-align:center;}
+
+.table-container{overflow-x:auto;margin-bottom:20px;border-radius:10px;border:1px solid #E5E7EB;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+th,td{padding:10px;border:1px solid #E5E7EB;text-align:center;vertical-align:middle;}
+th{background:#F9FAFB;font-weight:600;position:sticky;top:0;z-index:10;font-size:0.9em;}
 select{padding:5px;border-radius:5px;}
-button{padding:8px 12px;margin:5px;border-radius:8px;border:none;background:#4F46E5;color:white;cursor:pointer;}
+button{padding:8px 12px;margin:5px;border-radius:8px;border:none;cursor:pointer;}
+.btn-add{background:white;color:#374151;border:2px solid #E5E7EB;}
+.btn-add:hover{border-color:#4F46E5;}
+.delete-btn{color:#DC2626;background:none;border:none;font-weight:bold;cursor:pointer;margin-left:5px;}
+.badge{display:inline-block;padding:4px 8px;border-radius:12px;font-size:0.75em;font-weight:600;text-transform:uppercase;}
+.level-facil{background:#D1FAE5;color:#065F46;}
+.level-mitja{background:#FED7AA;color:#9A3412;}
+.level-dificil{background:#FEE2E2;color:#991B1B;}
+
+.header-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.menu-button button{font-size:24px;background:none;border:none;cursor:pointer;}
+
 .summary{margin-top:20px;}
-.progress-bar{background:#ddd;height:10px;width:100%;border-radius:5px;margin-top:5px;}
-.progress-fill{background:#10B981;height:10px;width:0%;border-radius:5px;}
+.progress-bar{background:#ddd;height:15px;width:100%;border-radius:5px;margin-top:5px;overflow:hidden;}
+.progress-fill{height:100%;width:0%;border-radius:5px;}
+
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;}
 .modal-content{background:white;padding:20px;border-radius:15px;max-width:400px;width:90%;}
-.modal-content input{width:100%;padding:8px;margin-bottom:10px;}
+.modal-content input, .modal-content select{width:100%;padding:8px;margin-bottom:10px;}
+.modal-content button{width:48%;margin:1%;}
+
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🛹 Seguiment de Trucs</h1>
-  <p class="subtitle">Registra els teus progressos setmana a setmana</p>
+  <div class="header-section">
+    <h1>🛹 Seguiment de Trucs</h1>
+    <div class="menu-button">
+      <button onclick="toggleMenu()">☰</button>
+      <div id="menuDropdown" style="display:none;position:absolute;right:0;top:40px;background:white;border:1px solid #E5E7EB;border-radius:10px;">
+        <div onclick="exportJSON()" style="padding:8px;cursor:pointer;">💾 Exportar JSON</div>
+        <div onclick="exportCSV()" style="padding:8px;cursor:pointer;">📊 Exportar CSV</div>
+      </div>
+    </div>
+  </div>
 
-  <table id="tricksTable">
-    <thead>
-      <tr id="tableHeader"><th>Truc</th></tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <div class="table-container">
+    <table id="tricksTable">
+      <thead>
+        <tr id="tableHeader"><th>Truc</th><th>Nivell</th></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
-  <button onclick="openAddTrickModal()">➕ Afegir Truc</button>
-  <button onclick="openAddWeekModal()">📅 Afegir Setmana</button>
+  <button class="btn-add" onclick="openAddTrickModal()">➕ Afegir Truc</button>
+  <button class="btn-add" onclick="openAddWeekModal()">📅 Afegir Setmana</button>
 
   <div class="summary" id="summary"></div>
 </div>
@@ -45,6 +72,11 @@ button{padding:8px 12px;margin:5px;border-radius:8px;border:none;background:#4F4
   <div class="modal-content">
     <h2>Afegir Truc</h2>
     <input type="text" id="trickNameInput" placeholder="Nom del truc">
+    <select id="trickLevelInput">
+      <option value="facil">Fàcil 🟢</option>
+      <option value="mitja">Mitjà 🟠</option>
+      <option value="dificil">Difícil 🔴</option>
+    </select>
     <button onclick="addTrick()">Afegir</button>
     <button onclick="closeModal('addTrickModal')">Cancel·lar</button>
   </div>
@@ -71,7 +103,7 @@ const firebaseConfig = {
   authDomain: "skate-tricks-list.firebaseapp.com",
   databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "skate-tricks-list",
-  storageBucket: "skate-tricks-list.firebasedatabase.app",
+  storageBucket: "skate-tricks-list.firebasedata.app",
   messagingSenderId: "1038259811397",
   appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
 };
@@ -93,34 +125,34 @@ function init() {
   });
 }
 
-function saveData() {
-  db.ref('tricksData').set(data);
-}
+function saveData() { db.ref('tricksData').set(data); }
 
 function renderTable() {
   const header = document.getElementById('tableHeader');
   const body = document.getElementById('tableBody');
 
-  header.innerHTML = '<th>Truc</th>';
-  data.weeks.forEach(week=>{
-    header.innerHTML += `<th>${week}</th>`;
+  // Header
+  header.innerHTML = '<th>Truc</th><th>Nivell</th>';
+  data.weeks.forEach((week,i)=>{
+    header.innerHTML += `<th>${week} <button class="delete-btn" onclick="deleteWeek(${i})">X</button></th>`;
   });
 
+  // Body
   body.innerHTML = '';
   data.tricks.forEach((trick,tIdx)=>{
-    let row = `<tr><td>${trick.name}</td>`;
+    let levelClass = trick.level==='facil'?'level-facil':trick.level==='mitja'?'level-mitja':'level-dificil';
+    let row = `<tr><td>${trick.name} <button class="delete-btn" onclick="deleteTrick(${tIdx})">X</button></td>`;
+    row += `<td><span class="badge ${levelClass}">${trick.level}</span></td>`;
     data.weeks.forEach(week=>{
       const attempt = trick.attempts?.[week] || '—';
-      row += `<td>
-        <select onchange="updateAttempt(${tIdx},'${week}',this.value)">
-          <option value="—"${attempt==='—'?' selected':''}>—</option>
-          <option value="1"${attempt==='1'?' selected':''}>1</option>
-          <option value="2"${attempt==='2'?' selected':''}>2</option>
-          <option value="3"${attempt==='3'?' selected':''}>3</option>
-          <option value="4"${attempt==='4'?' selected':''}>4</option>
-          <option value="5"${attempt==='5'?' selected':''}>5</option>
-        </select>
-      </td>`;
+      row += `<td><select onchange="updateAttempt(${tIdx},'${week}',this.value)">
+        <option value="—"${attempt==='—'?' selected':''}>—</option>
+        <option value="1"${attempt==='1'?' selected':''}>1</option>
+        <option value="2"${attempt==='2'?' selected':''}>2</option>
+        <option value="3"${attempt==='3'?' selected':''}>3</option>
+        <option value="4"${attempt==='4'?' selected':''}>4</option>
+        <option value="5"${attempt==='5'?' selected':''}>5</option>
+      </select></td>`;
     });
     row += '</tr>';
     body.innerHTML += row;
@@ -134,32 +166,45 @@ function renderSummary() {
     html += `<h3>${week}</h3>`;
     data.tricks.forEach(trick=>{
       const attempt = trick.attempts?.[week] || '—';
-      const progress = attempt==='—'?0:(parseInt(attempt)/5)*100;
-      html += `<div>${trick.name}: ${attempt} <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div></div>`;
+      let color='#ccc',percent=0;
+      switch(attempt){
+        case '1': color='#00FF00'; percent=100; break;
+        case '2': color='#10B981'; percent=80; break;
+        case '3': color='#FFD700'; percent=60; break;
+        case '4': color='#FFA500'; percent=40; break;
+        case '5': color='#FF7F7F'; percent=20; break;
+        default: color='#ccc'; percent=0;
+      }
+      html += `<div>${trick.name}: ${attempt} <div class="progress-bar"><div class="progress-fill" style="width:${percent}%;background:${color};"></div></div></div>`;
     });
   });
   summary.innerHTML = html;
 }
 
-window.updateAttempt = (tIdx,week,value)=>{
-  if(!data.tricks[tIdx].attempts) data.tricks[tIdx].attempts = {};
-  data.tricks[tIdx].attempts[week]=value;
-  saveData();
-};
+// Funcions globals
+window.updateAttempt=(tIdx,week,value)=>{if(!data.tricks[tIdx].attempts)data.tricks[tIdx].attempts={};data.tricks[tIdx].attempts[week]=value;saveData();renderSummary();}
+window.openAddTrickModal=()=>document.getElementById('addTrickModal').style.display='flex';
+window.openAddWeekModal=()=>document.getElementById('addWeekModal').style.display='flex';
+window.closeModal=id=>document.getElementById(id).style.display='none';
 
-window.openAddTrickModal = ()=>document.getElementById('addTrickModal').style.display='flex';
-window.openAddWeekModal = ()=>document.getElementById('addWeekModal').style.display='flex';
-window.closeModal = id=>document.getElementById(id).style.display='none';
-
-window.addTrick = ()=>{
+window.addTrick=()=>{
   const name=document.getElementById('trickNameInput').value.trim();
-  if(name){data.tricks.push({name,attempts:{}});saveData();closeModal('addTrickModal');}
+  const level=document.getElementById('trickLevelInput').value;
+  if(name){data.tricks.push({name,level,attempts:{}});saveData();closeModal('addTrickModal');}
 };
 
-window.addWeek = ()=>{
+window.addWeek=()=>{
   const name=document.getElementById('weekNameInput').value.trim();
   if(name){data.weeks.push(name);saveData();closeModal('addWeekModal');}
 };
+
+window.deleteTrick=i=>{data.tricks.splice(i,1);saveData();renderTable();renderSummary();}
+window.deleteWeek=i=>{const w=data.weeks[i];data.weeks.splice(i,1);data.tricks.forEach(t=>delete t.attempts[w]);saveData();renderTable();renderSummary();}
+
+window.toggleMenu=()=>{
+  const menu=document.getElementById('menuDropdown');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
 
 init();
 </script>
