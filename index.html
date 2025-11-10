@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trucs">
+    <title>Seguiment de Trucs</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #F3F4F6;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1F2937;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .menu-button {
+            position: relative;
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            margin-top: 10px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #F9FAFB;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #D1D5DB;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.9em;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-table {
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        td {
+            background: white;
+        }
+
+        tr:hover td {
+            background: #F9FAFB;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #4F46E5;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .trick-summary {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .trick-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #10B981;
+            transition: width 0.3s;
+            border-radius: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            color: #4F46E5;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .delete-btn:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-facil {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .level-mitja {
+            background: #FED7AA;
+            color: #9A3412;
+        }
+
+        .level-dificil {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .best-attempt {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #10B981;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <div>
+                <h1>🛹 Seguiment de Trucs</h1>
+                <p class="subtitle">Registra els teus progressos setmana a setmana</p>
+            </div>
+            <div class="menu-button">
+                <button class="btn-secondary" onclick="toggleMenu()">⋮ Menú</button>
+                <div class="menu-dropdown" id="menuDropdown">
+                    <div class="menu-item" onclick="exportJSON()">💾 Exportar JSON</div>
+                    <div class="menu-item" onclick="exportCSV()">📊 Exportar CSV</div>
+                    <div class="menu-item" onclick="document.getElementById('importFile').click()">📥 Importar Dades</div>
+                </div>
+                <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="tricksTable">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Truc</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="table-actions">
+                <button class="btn-primary btn-table" onclick="openAddTrickModal()">➕ Afegir Truc</button>
+                <button class="btn-primary btn-table" onclick="openAddWeekModal()">📅 Afegir Setmana</button>
+            </div>
+        </div>
+
+        <div class="summary" id="summary"></div>
+    </div>
+
+    <!-- Modal Afegir Truc -->
+    <div class="modal" id="addTrickModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Truc</h2>
+            <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addTrickModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addTrick()">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Afegir Setmana -->
+    <div class="modal" id="addWeekModal">
+        <div class="modal-content">
+            <h2>Afegir Nova Setmana</h2>
+            <input type="text" id="weekNameInput" placeholder="Nom de la setmana (ex: Setmana 1)...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addWeekModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addWeek()">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let data = {
+            weeks: ['Setmana 1', 'Setmana 2'],
+            tricks: [
+                { name: 'Ollie', attempts: {} },
+                { name: 'Kickflip', attempts: {} }
+            ]
+        };
+
+        function init() {
+            loadData();
+            renderTable();
+            renderSummary();
+        }
+
+        function saveData() {
+            localStorage.setItem('tricksData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('tricksData');
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+        }
+
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+
+            // Render header
+            header.innerHTML = '<th>Truc</th>';
+            data.weeks.forEach((week, index) => {
+                header.innerHTML += `
+                    <th>
+                        ${week}
+                        <button class="delete-btn" onclick="deleteWeek(${index})" title="Eliminar setmana">✕</button>
+                    </th>
+                `;
+            });
+
+            // Render body
+            body.innerHTML = '';
+            data.tricks.forEach((trick, trickIndex) => {
+                let row = `
+                    <tr>
+                        <td>
+                            <strong>${trick.name}</strong>
+                            <button class="delete-btn" onclick="deleteTrick(${trickIndex})" title="Eliminar truc">✕</button>
+                        </td>
+                `;
+
+                data.weeks.forEach((week, weekIndex) => {
+                    const attempt = trick.attempts[week] || '—';
+                    row += `
+                        <td>
+                            <select onchange="updateAttempt(${trickIndex}, '${week}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                            </select>
+                        </td>
+                    `;
+                });
+
+                row += '</tr>';
+                body.innerHTML += row;
+            });
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('active');
+        }
+
+        // Tancar menú quan es clica fora
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menuDropdown');
+            const button = e.target.closest('.menu-button');
+            if (!button && menu) {
+                menu.classList.remove('active');
+            }
+        });
+
+        function renderSummary() {
+            const summary = document.getElementById('summary');
+            let html = '<h2>📊 Resum de Progressos</h2>';
+
+            data.tricks.forEach(trick => {
+                const attempts = Object.values(trick.attempts).filter(a => a !== '—');
+                const numericAttempts = attempts.map(a => parseInt(a)).filter(a => !isNaN(a));
+                
+                let bestAttempt = '—';
+                let progress = 0;
+
+                if (numericAttempts.length > 0) {
+                    bestAttempt = Math.max(...numericAttempts);
+                    progress = (bestAttempt / 5) * 100;
+                }
+
+                html += `
+                    <div class="trick-summary">
+                        <div class="trick-name">
+                            ${trick.name}
+                            ${bestAttempt !== '—' ? `<span class="best-attempt">Millor: ${bestAttempt}/5</span>` : ''}
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            summary.innerHTML = html;
+        }
+
+        function updateAttempt(trickIndex, week, value) {
+            data.tricks[trickIndex].attempts[week] = value;
+            saveData();
+            renderSummary();
+        }
+
+        function openAddTrickModal() {
+            document.getElementById('addTrickModal').classList.add('active');
+            document.getElementById('trickNameInput').value = '';
+            document.getElementById('trickNameInput').focus();
+        }
+
+        function openAddWeekModal() {
+            document.getElementById('addWeekModal').classList.add('active');
+            document.getElementById('weekNameInput').value = '';
+            document.getElementById('weekNameInput').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addTrick() {
+            const name = document.getElementById('trickNameInput').value.trim();
+            if (name) {
+                data.tricks.push({ name, attempts: {} });
+                saveData();
+                renderTable();
+                renderSummary();
+                closeModal('addTrickModal');
+            }
+        }
+
+        function addWeek() {
+            const name = document.getElementById('weekNameInput').value.trim();
+            if (name) {
+                data.weeks.push(name);
+                saveData();
+                renderTable();
+                closeModal('addWeekModal');
+            }
+        }
+
+        function deleteTrick(index) {
+            if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
+                data.tricks.splice(index, 1);
+                saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function deleteWeek(index) {
+            if (confirm(`Segur que vols eliminar "${data.weeks[index]}"?`)) {
+                const weekName = data.weeks[index];
+                data.weeks.splice(index, 1);
+                data.tricks.forEach(trick => {
+                    delete trick.attempts[weekName];
+                });
+                saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function exportCSV() {
+            let csv = 'Truc,' + data.weeks.join(',') + '\n';
+            
+            data.tricks.forEach(trick => {
+                let row = trick.name;
+                data.weeks.forEach(week => {
+                    row += ',' + (trick.attempts[week] || '—');
+                });
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    if (file.name.endsWith('.json')) {
+                        data = JSON.parse(e.target.result);
+                    } else if (file.name.endsWith('.csv')) {
+                        const lines = e.target.result.split('\n');
+                        const headers = lines[0].split(',');
+                        
+                        data.weeks = headers.slice(1).map(h => h.trim());
+                        data.tricks = [];
+
+                        for (let i = 1; i < lines.length; i++) {
+                            if (lines[i].trim()) {
+                                const cols = lines[i].split(',');
+                                const trick = {
+                                    name: cols[0].trim(),
+                                    attempts: {}
+                                };
+                                
+                                data.weeks.forEach((week, index) => {
+                                    if (cols[index + 1]) {
+                                        trick.attempts[week] = cols[index + 1].trim();
+                                    }
+                                });
+                                
+                                data.tricks.push(trick);
+                            }
+                        }
+                    }
+
+                    saveData();
+                    renderTable();
+                    renderSummary();
+                    alert('Dades importades correctament!');
+                } catch (error) {
+                    alert('Error en importar les dades: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Tancar modals amb ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Tancar modal fent clic fora
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        init();
+    </script>
+</body>
+</html>
