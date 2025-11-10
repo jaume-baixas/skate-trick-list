@@ -4,10 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seguiment de Trucs amb Firebase</title>
-
 <style>
-/* Pots posar tot el CSS que tenies abans */
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;background:#F3F4F6;min-height:100vh;padding:20px 20px 100px}.container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:30px;}h1{color:#1F2937;margin-bottom:10px;font-size:2em}.subtitle{color:#6B7280;margin-bottom:30px;font-size:0.95em}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;background:#F3F4F6;min-height:100vh;padding:20px 20px 100px}
+.container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:30px;}
+h1{color:#1F2937;margin-bottom:10px;font-size:2em}
+.subtitle{color:#6B7280;margin-bottom:30px;font-size:0.95em}
+table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+th,td{padding:10px;border:1px solid #E5E7EB;text-align:center;}
+select{padding:5px;border-radius:5px;}
+button{padding:8px 12px;margin:5px;border-radius:8px;border:none;background:#4F46E5;color:white;cursor:pointer;}
+.summary{margin-top:20px;}
+.progress-bar{background:#ddd;height:10px;width:100%;border-radius:5px;margin-top:5px;}
+.progress-fill{background:#10B981;height:10px;width:0%;border-radius:5px;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;}
+.modal-content{background:white;padding:20px;border-radius:15px;max-width:400px;width:90%;}
+.modal-content input{width:100%;padding:8px;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -15,70 +27,65 @@
   <h1>🛹 Seguiment de Trucs</h1>
   <p class="subtitle">Registra els teus progressos setmana a setmana</p>
 
-  <div class="table-container">
-    <table id="tricksTable">
-      <thead>
-        <tr id="tableHeader"><th>Truc</th></tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-    <div class="table-actions">
-      <button onclick="openAddTrickModal()">➕ Afegir Truc</button>
-      <button onclick="openAddWeekModal()">📅 Afegir Setmana</button>
-    </div>
-  </div>
+  <table id="tricksTable">
+    <thead>
+      <tr id="tableHeader"><th>Truc</th></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <button onclick="openAddTrickModal()">➕ Afegir Truc</button>
+  <button onclick="openAddWeekModal()">📅 Afegir Setmana</button>
 
   <div class="summary" id="summary"></div>
 </div>
 
-<!-- Modal Afegir Truc -->
+<!-- Modal Truc -->
 <div class="modal" id="addTrickModal">
   <div class="modal-content">
-    <h2>Afegir Nou Truc</h2>
-    <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+    <h2>Afegir Truc</h2>
+    <input type="text" id="trickNameInput" placeholder="Nom del truc">
     <button onclick="addTrick()">Afegir</button>
     <button onclick="closeModal('addTrickModal')">Cancel·lar</button>
   </div>
 </div>
 
-<!-- Modal Afegir Setmana -->
+<!-- Modal Setmana -->
 <div class="modal" id="addWeekModal">
   <div class="modal-content">
-    <h2>Afegir Nova Setmana</h2>
+    <h2>Afegir Setmana</h2>
     <input type="text" id="weekNameInput" placeholder="Nom de la setmana">
     <button onclick="addWeek()">Afegir</button>
     <button onclick="closeModal('addWeekModal')">Cancel·lar</button>
   </div>
 </div>
 
-<script type="module">
-// ---------------- IMPORT DE FIREBASE ----------------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-// ---------------- CONFIGURACIÓ ----------------
+<script>
+// ---------------- CONFIGURACIÓ FIREBASE ----------------
 const firebaseConfig = {
   apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
   authDomain: "skate-tricks-list.firebaseapp.com",
   databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "skate-tricks-list",
-  storageBucket: "skate-tricks-list.firebasestorage.app",
+  storageBucket: "skate-tricks-list.firebasedatabase.app",
   messagingSenderId: "1038259811397",
   appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 // ---------------- DADES LOCALS ----------------
 let data = { weeks: ['Setmana 1'], tricks: [] };
 
 // ---------------- FUNCIONS ----------------
 function init() {
-  // Llegim dades de Firebase
-  const dbRef = ref(db, 'tricksData');
-  onValue(dbRef, (snapshot) => {
-    if(snapshot.exists()) {
+  const dbRef = db.ref('tricksData');
+  dbRef.on('value', snapshot=>{
+    if(snapshot.exists()){
       data = snapshot.val();
       renderTable();
       renderSummary();
@@ -87,7 +94,7 @@ function init() {
 }
 
 function saveData() {
-  set(ref(db, 'tricksData'), data);
+  db.ref('tricksData').set(data);
 }
 
 function renderTable() {
@@ -95,15 +102,17 @@ function renderTable() {
   const body = document.getElementById('tableBody');
 
   header.innerHTML = '<th>Truc</th>';
-  data.weeks.forEach((week)=>{header.innerHTML += `<th>${week}</th>`;});
+  data.weeks.forEach(week=>{
+    header.innerHTML += `<th>${week}</th>`;
+  });
 
   body.innerHTML = '';
-  data.tricks.forEach((trick, tIdx)=>{
+  data.tricks.forEach((trick,tIdx)=>{
     let row = `<tr><td>${trick.name}</td>`;
     data.weeks.forEach(week=>{
       const attempt = trick.attempts?.[week] || '—';
       row += `<td>
-        <select onchange="updateAttempt(${tIdx}, '${week}', this.value)">
+        <select onchange="updateAttempt(${tIdx},'${week}',this.value)">
           <option value="—"${attempt==='—'?' selected':''}>—</option>
           <option value="1"${attempt==='1'?' selected':''}>1</option>
           <option value="2"${attempt==='2'?' selected':''}>2</option>
@@ -120,35 +129,35 @@ function renderTable() {
 
 function renderSummary() {
   const summary = document.getElementById('summary');
-  let html = '<h2>📊 Resum de Progressos per Setmana</h2>';
+  let html = '<h2>📊 Resum de Progressos</h2>';
   data.weeks.forEach(week=>{
     html += `<h3>${week}</h3>`;
     data.tricks.forEach(trick=>{
       const attempt = trick.attempts?.[week] || '—';
       const progress = attempt==='—'?0:(parseInt(attempt)/5)*100;
-      html += `<div>${trick.name}: ${attempt} <div style="background:#ddd;height:10px;width:100%;border-radius:5px;"><div style="background:#10B981;height:10px;width:${progress}%;border-radius:5px;"></div></div></div>`;
+      html += `<div>${trick.name}: ${attempt} <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div></div>`;
     });
   });
   summary.innerHTML = html;
 }
 
-window.updateAttempt = (trickIndex, week, value) => {
-  if(!data.tricks[trickIndex].attempts) data.tricks[trickIndex].attempts = {};
-  data.tricks[trickIndex].attempts[week] = value;
+window.updateAttempt = (tIdx,week,value)=>{
+  if(!data.tricks[tIdx].attempts) data.tricks[tIdx].attempts = {};
+  data.tricks[tIdx].attempts[week]=value;
   saveData();
 };
 
-window.openAddTrickModal = ()=>document.getElementById('addTrickModal').classList.add('active');
-window.openAddWeekModal = ()=>document.getElementById('addWeekModal').classList.add('active');
-window.closeModal = (id)=>document.getElementById(id).classList.remove('active');
+window.openAddTrickModal = ()=>document.getElementById('addTrickModal').style.display='flex';
+window.openAddWeekModal = ()=>document.getElementById('addWeekModal').style.display='flex';
+window.closeModal = id=>document.getElementById(id).style.display='none';
 
 window.addTrick = ()=>{
-  const name = document.getElementById('trickNameInput').value.trim();
-  if(name){data.tricks.push({name, attempts:{}});saveData();closeModal('addTrickModal');}
+  const name=document.getElementById('trickNameInput').value.trim();
+  if(name){data.tricks.push({name,attempts:{}});saveData();closeModal('addTrickModal');}
 };
 
 window.addWeek = ()=>{
-  const name = document.getElementById('weekNameInput').value.trim();
+  const name=document.getElementById('weekNameInput').value.trim();
   if(name){data.weeks.push(name);saveData();closeModal('addWeekModal');}
 };
 
