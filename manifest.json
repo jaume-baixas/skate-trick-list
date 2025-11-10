@@ -1,0 +1,20 @@
+{
+  "name": "Skate Tricks",
+  "short_name": "SkateTricks",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#071021",
+  "theme_color": "#00d1b2",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

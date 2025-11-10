@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skate Tricks — Web App</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Skate Tricks">
+<style>
+:root{--bg:#071021;--card:#081425;--muted:#9fb0bf;--accent:#00d1b2;--glass: rgba(255,255,255,0.03);--danger:#ff6b6b}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6f0f3;background:var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:18px auto;padding:16px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:20px}
+p.lead{margin:0;color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+input[type="text"]{padding:10px;border-radius:10px;border:0;background:var(--card);color:white;min-width:180px}
+button{background:var(--accent);border:0;padding:9px 12px;border-radius:10px;color:#022;cursor:pointer;font-weight:700}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--muted)}
+.table-wrap{overflow:auto;margin-top:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px}
+table{border-collapse:collapse;width:100%;min-width:780px}
+th,td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left;vertical-align:middle}
+th{position:sticky;top:0;background:transparent;color:var(--muted);backdrop-filter:blur(4px);z-index:2;font-weight:600}
+td.name{font-weight:700;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+select, .level-select{padding:8px;border-radius:8px;border:0;background:var(--card);color:white}
+.small{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:8px;align-items:center}
+.week-header{display:flex;gap:8px;align-items:center}
+.tag{font-size:12px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.02);color:var(--muted)}
+.danger{background:var(--danger);color:#fff;padding:6px 8px;border-radius:8px;border:0}
+.hint{margin-top:10px;color:var(--muted);font-size:13px}
+.resum{margin-top:24px;border-radius:12px;padding:12px;background:var(--card)}
+.resum h2{margin:0 0 8px;font-size:16px;color:var(--accent)}
+.resum .trick-summary{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.progress-bar{height:6px;background:var(--glass);border-radius:3px;flex:1;margin-left:8px;position:relative;overflow:hidden}
+.progress-bar-inner{height:100%;background:var(--accent);border-radius:3px;width:0%}
+</style>
+<link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+<div class="wrap" role="application">
+<header>
+  <div>
+    <h1>Skate Tricks — Web App</h1>
+    <p class="lead">Files per truc, columnes per setmana. Selecciona 1–5 per indicar en quin intent s'ha aconseguit, o “—” si no s'ha aconseguit.</p>
+  </div>
+  <div style="margin-left:auto" class="small">Desat automàticament al dispositiu</div>
+</header>
+
+<div class="controls" role="toolbar" aria-label="Controls">
+  <input id="newTrick" placeholder="Nou truc (ex: Ollie, Kickflip)">
+  <select id="newLevel" class="level-select" aria-label="Nivell">
+    <option value="Fàcil">Fàcil</option>
+    <option value="Mitjà">Mitjà</option>
+    <option value="Difícil">Difícil</option>
+  </select>
+  <button id="addTrickBtn">Afegeix truc</button>
+  <button id="addWeekBtn" class="btn-ghost">+ Afegeix setmana</button>
+  <button id="renameWeeksBtn" class="btn-ghost">Canvia noms setmanes</button>
+  <div style="flex:1"></div>
+  <button id="exportJson" class="btn-ghost">Exportar JSON</button>
+  <button id="exportCsv" class="btn-ghost">Exportar CSV</button>
+  <button id="importJson" class="btn-ghost">Importar JSON</button>
+  <button id="clearAll" class="btn-ghost">Netejar tot</button>
+  <input id="fileInput" type="file" accept="application/json" style="display:none">
+</div>
+
+<div class="table-wrap" id="tableWrap" aria-live="polite">
+  <table id="mainTable" role="grid"></table>
+</div>
+
+<div class="resum" id="resumSection" aria-live="polite">
+  <h2>Resum dels trucs</h2>
+</div>
+
+<div class="hint">Tip: Toca una cel·la i tria 1–5 o “—”. Les setmanes es poden renombrar o eliminar.</div>
+</div>
+
+<script>
+// Incloure tot el JS de la versió anterior (per taula, intents, resum, exportació, importació, etc.)
+// (Aquí es pot copiar exactament el codi de la darrera versió amb "No aconseguit")
+</script>
+
+<script>
+// Service Worker registració per PWA
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log('Service Worker registrat')).catch(err=>console.log('Error SW:',err));
+}
+</script>
+
+</body>
+</html>
