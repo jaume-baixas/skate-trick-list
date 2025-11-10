@@ -1,219 +1,913 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seguiment de Trucs - Firebase</title>
-<style>
-  body { font-family:-apple-system,sans-serif; background:#F3F4F6; padding:20px; }
-  .container { max-width:1200px; margin:auto; background:white; padding:20px; border-radius:15px; }
-  table { width:100%; border-collapse:collapse; min-width:600px; }
-  th, td { padding:10px; border-bottom:1px solid #E5E7EB; }
-  th.sticky, td.sticky { position:sticky; left:0; background:white; z-index:5; }
-  .level-badge { padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:600; margin-left:5px; }
-  .level-facil { background:#D1FAE5; color:#065F46; }
-  .level-mitja { background:#FED7AA; color:#9A3412; }
-  .level-dificil { background:#FEE2E2; color:#991B1B; }
-  select { padding:6px 10px; border-radius:6px; border:2px solid #E5E7EB; }
-  button { cursor:pointer; border:none; border-radius:8px; padding:6px 12px; margin:2px; }
-  .btn-add { background:white; border:2px solid #E5E7EB; }
-  .btn-add:hover { border-color:#4F46E5; }
-  .delete-btn { color:red; font-weight:bold; cursor:pointer; margin-left:5px; }
-  .progress-bar { height:10px; border-radius:5px; overflow:hidden; margin-top:5px; background:#E5E7EB; }
-  .progress-fill { height:100%; transition:width 0.3s; }
-  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
-  .modal-content { background:white; padding:20px; border-radius:15px; max-width:400px; width:90%; }
-  .modal input, .modal select { width:100%; margin-bottom:10px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trucs">
+    <title>Seguiment de Trucs</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #F3F4F6;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1F2937;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .menu-button {
+            position: relative;
+        }
+
+        .burger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+        }
+
+        .burger-icon span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: #374151;
+            border-radius: 2px;
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            margin-top: 10px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #F9FAFB;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #D1D5DB;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.9em;
+        }
+
+        th:first-child,
+        th:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background: #F9FAFB;
+        }
+
+        th:nth-child(2) {
+            left: 200px;
+        }
+
+        td:first-child,
+        td:nth-child(2) {
+            position: sticky;
+            background: white;
+            z-index: 5;
+        }
+
+        td:first-child {
+            left: 0;
+            min-width: 200px;
+        }
+
+        td:nth-child(2) {
+            left: 200px;
+        }
+
+        tr:hover td:first-child,
+        tr:hover td:nth-child(2) {
+            background: #F9FAFB;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #F9FAFB;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .btn-table {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            background: white;
+            border: 2px solid #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-table:hover {
+            border-color: #4F46E5;
+            background: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        td {
+            background: white;
+        }
+
+        tr:hover td {
+            background: #F9FAFB;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #4F46E5;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .summary {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #1F2937;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+
+        .chart-week {
+            margin-bottom: 30px;
+        }
+
+        .chart-week h3 {
+            color: #4F46E5;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #F9FAFB;
+            border-radius: 8px;
+        }
+
+        .chart-label {
+            width: 200px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            height: 30px;
+            background: #E5E7EB;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .chart-value {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: #6B7280;
+            font-size: 0.9em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            color: #4F46E5;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .delete-btn:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-facil {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .level-mitja {
+            background: #FED7AA;
+            color: #9A3412;
+        }
+
+        .level-dificil {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .best-attempt {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #10B981;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .modal-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>🛹 Seguiment de Trucs</h1>
+    <div class="container">
+        <div class="header-section">
+            <div>
+                <h1>🛹 Seguiment de Trucs</h1>
+                <p class="subtitle">Registra els teus progressos setmana a setmana</p>
+            </div>
+            <div class="menu-button">
+                <button class="btn-secondary" onclick="toggleMenu()">
+                    <div class="burger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+                <div class="menu-dropdown" id="menuDropdown">
+                    <div class="menu-item" onclick="exportJSON(); toggleMenu()">💾 Exportar JSON</div>
+                    <div class="menu-item" onclick="exportCSV(); toggleMenu()">📊 Exportar CSV</div>
+                    <div class="menu-item" onclick="document.getElementById('importFile').click(); toggleMenu()">📥 Importar Dades</div>
+                </div>
+                <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importData(event)">
+            </div>
+        </div>
 
-<div>
-  <button class="btn-add" onclick="openAddTrickModal()">➕ Afegir Truc</button>
-  <button class="btn-add" onclick="openAddWeekModal()">➕ Afegir Setmana</button>
-  <button class="btn-add" onclick="exportJSON()">💾 Exportar JSON</button>
-  <button class="btn-add" onclick="exportCSV()">📊 Exportar CSV</button>
-  <input type="file" id="importFile" style="display:none;" onchange="importData(event)">
-  <button class="btn-add" onclick="document.getElementById('importFile').click()">📥 Importar</button>
-</div>
+        <div class="table-container">
+            <table id="tricksTable">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Truc</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="table-actions">
+                <button class="btn-table" onclick="openAddTrickModal()">➕ Afegir Truc</button>
+                <button class="btn-table" onclick="openAddWeekModal()">📅 Afegir Setmana</button>
+            </div>
+        </div>
 
-<div style="overflow-x:auto; margin-top:20px;">
-<table id="tricksTable">
-<thead>
-<tr id="tableHeader">
-  <th class="sticky">Truc</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-</div>
+        <div class="summary" id="summary"></div>
+    </div>
 
-<h2>📊 Resum de Progressos</h2>
-<div id="summary"></div>
-</div>
+    <!-- Modal Afegir Truc -->
+    <div class="modal" id="addTrickModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Truc</h2>
+            <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+            <select id="trickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja" selected>Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addTrickModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addTrick()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-<!-- Modals -->
-<div id="addTrickModal" class="modal">
-  <div class="modal-content">
-    <h3>Afegir Truc</h3>
-    <input type="text" id="trickNameInput" placeholder="Nom del truc">
-    <select id="trickLevelSelect">
-      <option value="facil">Fàcil</option>
-      <option value="mitja">Mitjà</option>
-      <option value="dificil">Difícil</option>
-    </select>
-    <button onclick="addTrick()">Afegir</button>
-    <button onclick="closeModal('addTrickModal')">Cancel·lar</button>
-  </div>
-</div>
+    <!-- Modal Afegir Setmana -->
+    <div class="modal" id="addWeekModal">
+        <div class="modal-content">
+            <h2>Afegir Nova Setmana</h2>
+            <input type="text" id="weekNameInput" placeholder="Nom de la setmana (ex: Setmana 1)...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addWeekModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addWeek()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-<div id="addWeekModal" class="modal">
-  <div class="modal-content">
-    <h3>Afegir Setmana</h3>
-    <input type="text" id="weekNameInput" placeholder="Nom de la setmana (ex: Setmana 1)">
-    <button onclick="addWeek()">Afegir</button>
-    <button onclick="closeModal('addWeekModal')">Cancel·lar</button>
-  </div>
-</div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-database.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+            authDomain: "skate-tricks-list.firebaseapp.com",
+            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skate-tricks-list",
+            storageBucket: "skate-tricks-list.firebasestorage.app",
+            messagingSenderId: "1038259811397",
+            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+        };
 
-const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "skate-tricks-list.firebaseapp.com",
-  databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "skate-tricks-list",
-  storageBucket: "skate-tricks-list.appspot.com",
-  messagingSenderId: "1038259811397",
-  appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-};
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const dataRef = ref(database, 'tricksData');
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+        let data = {
+            weeks: ['S1', 'S2'],
+            tricks: [
+                { name: 'Ollie', level: 'facil', attempts: {} },
+                { name: 'Kickflip', level: 'mitja', attempts: {} }
+            ]
+        };
 
-let data = { weeks: ['Setmana 1'], tricks: [] };
+        let isLoadingFromFirebase = false;
 
-function saveData(){ set(ref(db,'tricksData'), data); }
+        function init() {
+            loadFromFirebase();
+        }
 
-function loadData(){
-  onValue(ref(db,'tricksData'), snapshot=>{
-    const val = snapshot.val();
-    if(val) data = val;
-    renderTable();
-    renderSummary();
-  });
-}
+        function loadFromFirebase() {
+            isLoadingFromFirebase = true;
+            onValue(dataRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    data = snapshot.val();
+                } else {
+                    // Si no hi ha dades a Firebase, usar les dades per defecte
+                    saveData();
+                }
+                renderTable();
+                renderSummary();
+                isLoadingFromFirebase = false;
+            });
+        }
 
-function renderTable(){
-  const header=document.getElementById('tableHeader');
-  const body=document.getElementById('tableBody');
-  header.innerHTML='<th class="sticky">Truc</th>';
-  data.weeks.forEach((week, idx)=>{ header.innerHTML+=`<th>${week} <span class="delete-btn" onclick="deleteWeek(${idx})">✕</span></th>`; });
-  body.innerHTML='';
-  data.tricks.forEach((trick,tIdx)=>{
-    let row=`<tr><td class="sticky">${trick.name} <span class="level-badge level-${trick.level}">${trick.level}</span> <span class="delete-btn" onclick="deleteTrick(${tIdx})">✕</span></td>`;
-    data.weeks.forEach((week)=>{
-      const attempt=trick.attempts?.[week]||'—';
-      row+=`<td><select onchange="updateAttempt(${tIdx},'${week}',this.value)">
-        <option value="—" ${attempt==='—'?'selected':''}>—</option>
-        <option value="1" ${attempt==='1'?'selected':''}>1</option>
-        <option value="2" ${attempt==='2'?'selected':''}>2</option>
-        <option value="3" ${attempt==='3'?'selected':''}>3</option>
-        <option value="4" ${attempt==='4'?'selected':''}>4</option>
-        <option value="5" ${attempt==='5'?'selected':''}>5</option>
-      </select></td>`;
-    });
-    row+='</tr>'; body.innerHTML+=row;
-  });
-}
+        function saveData() {
+            if (isLoadingFromFirebase) return;
+            
+            set(dataRef, data)
+                .then(() => {
+                    console.log('Dades guardades a Firebase');
+                })
+                .catch((error) => {
+                    console.error('Error guardant a Firebase:', error);
+                    // Guardar localment com a backup
+                    localStorage.setItem('tricksData', JSON.stringify(data));
+                });
+        }
 
-function renderSummary(){
-  const summary=document.getElementById('summary');
-  summary.innerHTML='';
-  data.tricks.forEach(trick=>{
-    data.weeks.forEach(week=>{
-      const val=trick.attempts?.[week]||'—';
-      let percent=0,color='#9CA3AF';
-      if(val==='1'){percent=100;color='#10B981';}
-      else if(val==='2'){percent=80;color='#22C55E';}
-      else if(val==='3'){percent=60;color='#FACC15';}
-      else if(val==='4'){percent=40;color='#F97316';}
-      else if(val==='5'){percent=20;color='#F87171';}
-      summary.innerHTML+=`<div>${trick.name} (${week})<div class="progress-bar"><div class="progress-fill" style="width:${percent}%;background:${color}"></div></div></div>`;
-    });
-  });
-}
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
 
-function updateAttempt(trickIndex, week, value){
-  data.tricks[trickIndex].attempts[week]=value;
-  saveData(); renderSummary();
-}
+            // Render header
+            header.innerHTML = '<th>Truc</th><th>Nivell</th>';
+            data.weeks.forEach((week, index) => {
+                header.innerHTML += `
+                    <th>
+                        ${week}
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteWeek(${index})" title="Eliminar setmana">✕</button>
+                    </th>
+                `;
+            });
 
-function openAddTrickModal(){document.getElementById('addTrickModal').style.display='flex';}
-function openAddWeekModal(){document.getElementById('addWeekModal').style.display='flex';}
-function closeModal(id){document.getElementById(id).style.display='none';}
+            // Render body
+            body.innerHTML = '';
+            data.tricks.forEach((trick, trickIndex) => {
+                const levelClass = `level-${trick.level || 'mitja'}`;
+                const levelText = {
+                    'facil': 'Fàcil',
+                    'mitja': 'Mitjà',
+                    'dificil': 'Difícil'
+                }[trick.level || 'mitja'];
 
-function addTrick(){
-  const name=document.getElementById('trickNameInput').value;
-  const level=document.getElementById('trickLevelSelect').value;
-  if(name){ data.tricks.push({name,level,attempts:{}}); saveData(); renderTable(); renderSummary(); closeModal('addTrickModal'); }
-}
+                let row = `
+                    <tr>
+                        <td>
+                            <strong>${trick.name}</strong>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteTrick(${trickIndex})" title="Eliminar truc">✕</button>
+                        </td>
+                        <td>
+                            <span class="level-badge ${levelClass}">${levelText}</span>
+                        </td>
+                `;
 
-function addWeek(){
-  const name=document.getElementById('weekNameInput').value;
-  if(name){ data.weeks.push(name); saveData(); renderTable(); closeModal('addWeekModal'); }
-}
+                data.weeks.forEach((week, weekIndex) => {
+                    const attempt = trick.attempts[week] || '—';
+                    row += `
+                        <td>
+                            <select onchange="updateAttempt(${trickIndex}, '${week}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                            </select>
+                        </td>
+                    `;
+                });
 
-function deleteTrick(idx){ data.tricks.splice(idx,1); saveData(); renderTable(); renderSummary(); }
-function deleteWeek(idx){ const w=data.weeks[idx]; data.weeks.splice(idx,1); data.tricks.forEach(t=>{delete t.attempts[w];}); saveData(); renderTable(); renderSummary(); }
+                row += '</tr>';
+                body.innerHTML += row;
+            });
+        }
 
-function exportJSON(){
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='trucs.json'; a.click();
-}
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('active');
+        }
 
-function exportCSV(){
-  let csv='Truc,'+data.weeks.join(',')+'\n';
-  data.tricks.forEach(t=>{
-    let row=t.name;
-    data.weeks.forEach(w=>row+=','+(t.attempts[w]||'—'));
-    csv+=row+'\n';
-  });
-  const blob = new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='trucs.csv'; a.click();
-}
+        // Tancar menú quan es clica fora
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menuDropdown');
+            const button = e.target.closest('.menu-button');
+            if (!button && menu) {
+                menu.classList.remove('active');
+            }
+        });
 
-function importData(event){
-  const file=event.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      if(file.name.endsWith('.json')) data=JSON.parse(e.target.result);
-      else if(file.name.endsWith('.csv')){
-        const lines=e.target.result.split('\n');
-        const headers=lines[0].split(',');
-        data.weeks=headers.slice(1).map(h=>h.trim()); data.tricks=[];
-        for(let i=1;i<lines.length;i++){if(lines[i].trim()){
-          const cols=lines[i].split(',');
-          const trick={name:cols[0].trim(),level:'facil',attempts:{}};
-          data.weeks.forEach((w,idx)=>{ if(cols[idx+1]) trick.attempts[w]=cols[idx+1].trim(); });
-          data.tricks.push(trick);
-        }}
-      }
-      saveData(); renderTable(); renderSummary();
-      alert('Dades importades correctament!');
-    }catch(err){alert('Error en importar: '+err.message);}
-  };
-  reader.readAsText(file);
-}
+        function renderSummary() {
+            const summary = document.getElementById('summary');
+            let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
 
-loadData();
-</script>
+            // Crear una gràfica per cada setmana
+            data.weeks.forEach(week => {
+                html += `<div class="chart-week"><h3>${week}</h3>`;
+
+                data.tricks.forEach(trick => {
+                    const attempt = trick.attempts[week];
+                    
+                    let displayValue = 'No aconseguit';
+                    let percentage = 0;
+                    let barColor = '#9CA3AF';
+
+                    if (attempt && attempt !== '—') {
+                        const numAttempt = parseInt(attempt);
+                        displayValue = `Intent ${numAttempt}`;
+                        // Escala inversa: 1 = 100%, 5 = 20%
+                        percentage = ((6 - numAttempt) / 5) * 100;
+                        
+                        // Colors segons l'intent
+                        if (numAttempt === 1) barColor = '#10B981'; // Verd
+                        else if (numAttempt === 2) barColor = '#34D399';
+                        else if (numAttempt === 3) barColor = '#FBBF24'; // Groc
+                        else if (numAttempt === 4) barColor = '#FB923C'; // Taronja
+                        else if (numAttempt === 5) barColor = '#F87171'; // Vermell
+                    }
+
+                    html += `
+                        <div class="chart-bar">
+                            <div class="chart-label">${trick.name}</div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                    ${percentage > 15 ? displayValue : ''}
+                                </div>
+                            </div>
+                            <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            summary.innerHTML = html;
+        }
+
+        function updateAttempt(trickIndex, week, value) {
+            data.tricks[trickIndex].attempts[week] = value;
+            saveData();
+            renderSummary();
+        }
+
+        function openAddTrickModal() {
+            document.getElementById('addTrickModal').classList.add('active');
+            document.getElementById('trickNameInput').value = '';
+            document.getElementById('trickNameInput').focus();
+        }
+
+        function openAddWeekModal() {
+            document.getElementById('addWeekModal').classList.add('active');
+            document.getElementById('weekNameInput').value = '';
+            document.getElementById('weekNameInput').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addTrick() {
+            const name = document.getElementById('trickNameInput').value.trim();
+            const level = document.getElementById('trickLevelSelect').value;
+            if (name) {
+                data.tricks.push({ name, level, attempts: {} });
+                saveData();
+                renderTable();
+                renderSummary();
+                closeModal('addTrickModal');
+            }
+        }
+
+        function addWeek() {
+            const name = document.getElementById('weekNameInput').value.trim();
+            if (name) {
+                data.weeks.push(name);
+                saveData();
+                renderTable();
+                closeModal('addWeekModal');
+            }
+        }
+
+        function deleteTrick(index) {
+            if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
+                data.tricks.splice(index, 1);
+                saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function deleteWeek(index) {
+            if (confirm(`Segur que vols eliminar "${data.weeks[index]}"?`)) {
+                const weekName = data.weeks[index];
+                data.weeks.splice(index, 1);
+                data.tricks.forEach(trick => {
+                    delete trick.attempts[weekName];
+                });
+                saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            toggleMenu();
+        }
+
+        function exportCSV() {
+            let csv = 'Truc,Nivell,' + data.weeks.join(',') + '\n';
+            
+            data.tricks.forEach(trick => {
+                const levelText = {
+                    'facil': 'Fàcil',
+                    'mitja': 'Mitjà',
+                    'dificil': 'Difícil'
+                }[trick.level || 'mitja'];
+                
+                let row = trick.name + ',' + levelText;
+                data.weeks.forEach(week => {
+                    row += ',' + (trick.attempts[week] || '—');
+                });
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            toggleMenu();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    if (file.name.endsWith('.json')) {
+                        data = JSON.parse(e.target.result);
+                        // Assegurar que els trucs antics tinguin nivell
+                        data.tricks.forEach(trick => {
+                            if (!trick.level) trick.level = 'mitja';
+                        });
+                    } else if (file.name.endsWith('.csv')) {
+                        const lines = e.target.result.split('\n');
+                        const headers = lines[0].split(',');
+                        
+                        data.weeks = headers.slice(2).map(h => h.trim());
+                        data.tricks = [];
+
+                        for (let i = 1; i < lines.length; i++) {
+                            if (lines[i].trim()) {
+                                const cols = lines[i].split(',');
+                                const levelMap = {
+                                    'Fàcil': 'facil',
+                                    'Mitjà': 'mitja',
+                                    'Difícil': 'dificil'
+                                };
+                                const trick = {
+                                    name: cols[0].trim(),
+                                    level: levelMap[cols[1].trim()] || 'mitja',
+                                    attempts: {}
+                                };
+                                
+                                data.weeks.forEach((week, index) => {
+                                    if (cols[index + 2]) {
+                                        trick.attempts[week] = cols[index + 2].trim();
+                                    }
+                                });
+                                
+                                data.tricks.push(trick);
+                            }
+                        }
+                    }
+
+                    saveData();
+                    renderTable();
+                    renderSummary();
+                    alert('Dades importades correctament!');
+                    toggleMenu();
+                } catch (error) {
+                    alert('Error en importar les dades: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        init();
+    </script>
+    <script>
+        // Tancar modals amb ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Tancar modal fent clic fora
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
