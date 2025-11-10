@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skate Tricks — Taula setmanal amb Resum i No aconseguit</title>
+<style>
+:root{--bg:#071021;--card:#081425;--muted:#9fb0bf;--accent:#00d1b2;--glass: rgba(255,255,255,0.03);--danger:#ff6b6b}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6f0f3;background:var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:18px auto;padding:16px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:20px}
+p.lead{margin:0;color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+input[type="text"]{padding:10px;border-radius:10px;border:0;background:var(--card);color:white;min-width:180px}
+button{background:var(--accent);border:0;padding:9px 12px;border-radius:10px;color:#022;cursor:pointer;font-weight:700}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--muted)}
+.table-wrap{overflow:auto;margin-top:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px}
+table{border-collapse:collapse;width:100%;min-width:780px}
+th,td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left;vertical-align:middle}
+th{position:sticky;top:0;background:transparent;color:var(--muted);backdrop-filter:blur(4px);z-index:2;font-weight:600}
+td.name{font-weight:700;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+select, .level-select{padding:8px;border-radius:8px;border:0;background:var(--card);color:white}
+.small{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:8px;align-items:center}
+.week-header{display:flex;gap:8px;align-items:center}
+.tag{font-size:12px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.02);color:var(--muted)}
+.danger{background:var(--danger);color:#fff;padding:6px 8px;border-radius:8px;border:0}
+.hint{margin-top:10px;color:var(--muted);font-size:13px}
+.resum{margin-top:24px;border-radius:12px;padding:12px;background:var(--card)}
+.resum h2{margin:0 0 8px;font-size:16px;color:var(--accent)}
+.resum .trick-summary{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.progress-bar{height:6px;background:var(--glass);border-radius:3px;flex:1;margin-left:8px;position:relative;overflow:hidden}
+.progress-bar-inner{height:100%;background:var(--accent);border-radius:3px;width:0%}
+</style>
+</head>
+<body>
+<div class="wrap" role="application">
+<header>
+  <div>
+    <h1>Skate Tricks — Taula setmanal</h1>
+    <p class="lead">Files per truc, columnes per setmana. Selecciona 1–5 per indicar en quin intent s'ha aconseguit, o “—” si no s'ha aconseguit.</p>
+  </div>
+  <div style="margin-left:auto" class="small">Desat automàticament al dispositiu</div>
+</header>
+
+<div class="controls" role="toolbar" aria-label="Controls">
+  <input id="newTrick" placeholder="Nou truc (ex: Ollie, Kickflip)">
+  <select id="newLevel" class="level-select" aria-label="Nivell">
+    <option value="Fàcil">Fàcil</option>
+    <option value="Mitjà">Mitjà</option>
+    <option value="Difícil">Difícil</option>
+  </select>
+  <button id="addTrickBtn">Afegeix truc</button>
+  <button id="addWeekBtn" class="btn-ghost">+ Afegeix setmana</button>
+  <button id="renameWeeksBtn" class="btn-ghost">Canvia noms setmanes</button>
+  <div style="flex:1"></div>
+  <button id="exportJson" class="btn-ghost">Exportar JSON</button>
+  <button id="exportCsv" class="btn-ghost">Exportar CSV</button>
+  <button id="importJson" class="btn-ghost">Importar JSON</button>
+  <button id="clearAll" class="btn-ghost">Netejar tot</button>
+  <input id="fileInput" type="file" accept="application/json" style="display:none">
+</div>
+
+<div class="table-wrap" id="tableWrap" aria-live="polite">
+  <table id="mainTable" role="grid"></table>
+</div>
+
+<div class="resum" id="resumSection" aria-live="polite">
+  <h2>Resum dels trucs</h2>
+</div>
+
+<div class="hint">Tip: Toca una cel·la i tria 1–5 o “—”. Les setmanes es poden renombrar o eliminar.</div>
+</div>
+
+<script>
+(() => {
+const KEY = 'skate_tricks_table_v3';
+const tableEl = document.getElementById('mainTable');
+const resumEl = document.getElementById('resumSection');
+const addTrickBtn = document.getElementById('addTrickBtn');
+const newTrick = document.getElementById('newTrick');
+const newLevel = document.getElementById('newLevel');
+const addWeekBtn = document.getElementById('addWeekBtn');
+const renameWeeksBtn = document.getElementById('renameWeeksBtn');
+const exportJsonBtn = document.getElementById('exportJson');
+const exportCsvBtn = document.getElementById('exportCsv');
+const importJsonBtn = document.getElementById('importJson');
+const fileInput = document.getElementById('fileInput');
+const clearBtn = document.getElementById('clearAll');
+
+function todayLabel(){ const d=new Date(); return `Setmana 1 - ${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function load(){ const raw=localStorage.getItem(KEY); if(!raw){ const data={weeks:[todayLabel()], tricks:[{id:genId(),name:'Ollie',level:'Fàcil',results:{}},{id:genId(),name:'Kickflip',level:'Mitjà',results:{}},{id:genId(),name:'Shuvit',level:'Fàcil',results:{}}]}; save(data); return data;} try{return JSON.parse(raw);}catch(e){return{weeks:[],tricks:[]}} }
+function save(data){ localStorage.setItem(KEY,JSON.stringify(data)); }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function render(){
+  const store = load();
+  tableEl.innerHTML='';
+  const thead=document.createElement('thead');
+  const hdrRow=document.createElement('tr');
+  ['Truc','Nivell',...store.weeks,'Accions'].forEach(h=>{const th=document.createElement('th'); th.textContent=h; hdrRow.appendChild(th);});
+  thead.appendChild(hdrRow); tableEl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  store.tricks.forEach(tr=>{
+    const row=document.createElement('tr');
+    const nameTd=document.createElement('td'); nameTd.className='name';
+    const nameInput=document.createElement('input'); nameInput.value=tr.name; nameInput.style.background='transparent'; nameInput.style.border='0'; nameInput.style.color='inherit'; nameInput.style.fontWeight='700'; nameInput.style.width='100%';
+    nameInput.addEventListener('change',()=>{tr.name=nameInput.value;save(store);render();});
+    nameTd.appendChild(nameInput); row.appendChild(nameTd);
+
+    const levelTd=document.createElement('td'); const levelSel=document.createElement('select'); levelSel.className='level-select';
+    ['Fàcil','Mitjà','Difícil'].forEach(opt=>{const o=document.createElement('option');o.value=opt;o.textContent=opt;if(tr.level===opt)o.selected=true;levelSel.appendChild(o);});
+    levelSel.addEventListener('change',()=>{tr.level=levelSel.value;save(store);render();}); levelTd.appendChild(levelSel); row.appendChild(levelTd);
+
+    store.weeks.forEach((wk)=>{
+      const td=document.createElement('td'); const sel=document.createElement('select');
+      sel.innerHTML='<option value="">—</option>'; for(let i=1;i<=5;i++){ const o=document.createElement('option'); o.value=String(i); o.textContent=String(i); sel.appendChild(o);}
+      const val=tr.results[wk]!==undefined ? tr.results[wk] : ''; if(val!==undefined && val!==null) sel.value=String(val);
+      sel.addEventListener('change',()=>{ if(sel.value==='') delete tr.results[wk]; else tr.results[wk]=Number(sel.value); save(store); render();});
+      td.appendChild(sel); row.appendChild(td);
+    });
+    const actTd=document.createElement('td'); const delBtn=document.createElement('button'); delBtn.className='btn-ghost'; delBtn.textContent='Eliminar';
+    delBtn.addEventListener('click',()=>{ if(confirm('Eliminar aquest truc?')){ store.tricks=store.tricks.filter(x=>x.id!==tr.id); save(store); render(); } });
+    actTd.appendChild(delBtn); row.appendChild(actTd);
+    tbody.appendChild(row);
+  });
+  tableEl.appendChild(tbody);
+
+  // Resum minimalista
+  resumEl.innerHTML='<h2>Resum dels trucs</h2>';
+  store.tricks.forEach(tr=>{
+    const div=document.createElement('div'); div.className='trick-summary';
+    const label=document.createElement('div'); label.textContent=`${tr.name} (${tr.level})`;
+    const vals = Object.values(tr.results).filter(v=>v>0);
+    const best = vals.length>0? Math.min(...vals) : 0;
+    const barContainer=document.createElement('div'); barContainer.className='progress-bar';
+    const barInner=document.createElement('div'); barInner.className='progress-bar-inner'; barInner.style.width=`${best>0? (6-best)*20 : 0}%`; barContainer.appendChild(barInner);
+    const bestLabel=document.createElement('div'); bestLabel.textContent=best>0? best:'—';
+    div.appendChild(label); div.appendChild(barContainer); div.appendChild(bestLabel);
+    resumEl.appendChild(div);
+  });
+}
+
+addTrickBtn.addEventListener('click',()=>{ const name=newTrick.value.trim(); if(!name) return alert('Introdueix un nom de truc'); const store=load(); store.tricks.push({id:genId(),name,level:newLevel.value,results:{}}); save(store); newTrick.value=''; render(); });
+newTrick.addEventListener('keypress',(e)=>{if(e.key==='Enter') addTrickBtn.click();});
+addWeekBtn.addEventListener('click',()=>{ const store=load(); const defaultLabel=`Setmana ${store.weeks.length+1} - ${new Date().toISOString().slice(0,10)}`; const name=prompt('Nom de la nova setmana',defaultLabel); if(!name)return; store.weeks.push(name); save(store); render(); });
+renameWeeksBtn.addEventListener('click',()=>{ const store=load(); const newNames=prompt('Introdueix noms separats per coma per substituir les setmanes actuals. Ex: "S1,S2,S3"',''); if(!newNames)return; const arr=newNames.split(',').map(s=>s.trim()).filter(Boolean); if(arr.length===0)return; store.weeks=arr; save(store); render(); });
+exportJsonBtn.addEventListener('click',()=>{ const store=load(); const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='skate_tricks_table_export.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+exportCsvBtn.addEventListener('click',()=>{ const store=load(); const rows=[]; const header=['Truc','Nivell',...store.weeks]; rows.push(header.join(',')); store.tricks.forEach(t=>{ const row=[`"${t.name.replace(/"/g,'""')}"`,t.level]; store.weeks.forEach(w=>{ row.push(t.results[w]?String(t.results[w]):''); }); rows.push(row.join(',')); }); const blob=new Blob([rows.join('\n')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='skate_tricks_table.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+importJsonBtn.addEventListener('click',()=> fileInput.click());
+fileInput.addEventListener('change',(e)=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(ev)=>{ try{ const obj=JSON.parse(ev.target.result); if(obj.weeks && obj.tricks){ localStorage.setItem(KEY,JSON.stringify(obj)); alert('Importació correcta'); render(); } else alert('Fitxer no vàlid'); } catch(err){ alert('Error llegint fitxer: '+err.message); } }; r.readAsText(f); });
+clearBtn.addEventListener('click',()=>{ if(confirm('Segur que vols esborrar totes les dades?')){ localStorage.removeItem(KEY); render(); } });
+
+render();
+})(); 
+</script>
+</body>
+</html>
