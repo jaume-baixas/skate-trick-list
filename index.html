@@ -15,10 +15,10 @@
   .level-mitja { background:#FED7AA; color:#9A3412; }
   .level-dificil { background:#FEE2E2; color:#991B1B; }
   select { padding:6px 10px; border-radius:6px; border:2px solid #E5E7EB; }
-  button { cursor:pointer; border:none; border-radius:8px; padding:6px 12px; }
+  button { cursor:pointer; border:none; border-radius:8px; padding:6px 12px; margin:2px; }
   .btn-add { background:white; border:2px solid #E5E7EB; }
   .btn-add:hover { border-color:#4F46E5; }
-  .delete-btn { color:red; font-weight:bold; margin-left:5px; cursor:pointer; }
+  .delete-btn { color:red; font-weight:bold; cursor:pointer; margin-left:5px; }
   .progress-bar { height:10px; border-radius:5px; overflow:hidden; margin-top:5px; background:#E5E7EB; }
   .progress-fill { height:100%; transition:width 0.3s; }
   .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
@@ -33,6 +33,10 @@
 <div>
   <button class="btn-add" onclick="openAddTrickModal()">➕ Afegir Truc</button>
   <button class="btn-add" onclick="openAddWeekModal()">➕ Afegir Setmana</button>
+  <button class="btn-add" onclick="exportJSON()">💾 Exportar JSON</button>
+  <button class="btn-add" onclick="exportCSV()">📊 Exportar CSV</button>
+  <input type="file" id="importFile" style="display:none;" onchange="importData(event)">
+  <button class="btn-add" onclick="document.getElementById('importFile').click()">📥 Importar</button>
 </div>
 
 <div style="overflow-x:auto; margin-top:20px;">
@@ -50,7 +54,7 @@
 <div id="summary"></div>
 </div>
 
-<!-- Modal Afegir Truc -->
+<!-- Modals -->
 <div id="addTrickModal" class="modal">
   <div class="modal-content">
     <h3>Afegir Truc</h3>
@@ -65,7 +69,6 @@
   </div>
 </div>
 
-<!-- Modal Afegir Setmana -->
 <div id="addWeekModal" class="modal">
   <div class="modal-content">
     <h3>Afegir Setmana</h3>
@@ -76,98 +79,141 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "skate-tricks-list.firebaseapp.com",
-    databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "skate-tricks-list",
-    storageBucket: "skate-tricks-list.appspot.com",
-    messagingSenderId: "1038259811397",
-    appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+const firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "skate-tricks-list.firebaseapp.com",
+  databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "skate-tricks-list",
+  storageBucket: "skate-tricks-list.appspot.com",
+  messagingSenderId: "1038259811397",
+  appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let data = { weeks: ['Setmana 1'], tricks: [] };
+
+function saveData(){ set(ref(db,'tricksData'), data); }
+
+function loadData(){
+  onValue(ref(db,'tricksData'), snapshot=>{
+    const val = snapshot.val();
+    if(val) data = val;
+    renderTable();
+    renderSummary();
+  });
+}
+
+function renderTable(){
+  const header=document.getElementById('tableHeader');
+  const body=document.getElementById('tableBody');
+  header.innerHTML='<th class="sticky">Truc</th>';
+  data.weeks.forEach((week, idx)=>{ header.innerHTML+=`<th>${week} <span class="delete-btn" onclick="deleteWeek(${idx})">✕</span></th>`; });
+  body.innerHTML='';
+  data.tricks.forEach((trick,tIdx)=>{
+    let row=`<tr><td class="sticky">${trick.name} <span class="level-badge level-${trick.level}">${trick.level}</span> <span class="delete-btn" onclick="deleteTrick(${tIdx})">✕</span></td>`;
+    data.weeks.forEach((week)=>{
+      const attempt=trick.attempts?.[week]||'—';
+      row+=`<td><select onchange="updateAttempt(${tIdx},'${week}',this.value)">
+        <option value="—" ${attempt==='—'?'selected':''}>—</option>
+        <option value="1" ${attempt==='1'?'selected':''}>1</option>
+        <option value="2" ${attempt==='2'?'selected':''}>2</option>
+        <option value="3" ${attempt==='3'?'selected':''}>3</option>
+        <option value="4" ${attempt==='4'?'selected':''}>4</option>
+        <option value="5" ${attempt==='5'?'selected':''}>5</option>
+      </select></td>`;
+    });
+    row+='</tr>'; body.innerHTML+=row;
+  });
+}
+
+function renderSummary(){
+  const summary=document.getElementById('summary');
+  summary.innerHTML='';
+  data.tricks.forEach(trick=>{
+    data.weeks.forEach(week=>{
+      const val=trick.attempts?.[week]||'—';
+      let percent=0,color='#9CA3AF';
+      if(val==='1'){percent=100;color='#10B981';}
+      else if(val==='2'){percent=80;color='#22C55E';}
+      else if(val==='3'){percent=60;color='#FACC15';}
+      else if(val==='4'){percent=40;color='#F97316';}
+      else if(val==='5'){percent=20;color='#F87171';}
+      summary.innerHTML+=`<div>${trick.name} (${week})<div class="progress-bar"><div class="progress-fill" style="width:${percent}%;background:${color}"></div></div></div>`;
+    });
+  });
+}
+
+function updateAttempt(trickIndex, week, value){
+  data.tricks[trickIndex].attempts[week]=value;
+  saveData(); renderSummary();
+}
+
+function openAddTrickModal(){document.getElementById('addTrickModal').style.display='flex';}
+function openAddWeekModal(){document.getElementById('addWeekModal').style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+function addTrick(){
+  const name=document.getElementById('trickNameInput').value;
+  const level=document.getElementById('trickLevelSelect').value;
+  if(name){ data.tricks.push({name,level,attempts:{}}); saveData(); renderTable(); renderSummary(); closeModal('addTrickModal'); }
+}
+
+function addWeek(){
+  const name=document.getElementById('weekNameInput').value;
+  if(name){ data.weeks.push(name); saveData(); renderTable(); closeModal('addWeekModal'); }
+}
+
+function deleteTrick(idx){ data.tricks.splice(idx,1); saveData(); renderTable(); renderSummary(); }
+function deleteWeek(idx){ const w=data.weeks[idx]; data.weeks.splice(idx,1); data.tricks.forEach(t=>{delete t.attempts[w];}); saveData(); renderTable(); renderSummary(); }
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='trucs.json'; a.click();
+}
+
+function exportCSV(){
+  let csv='Truc,'+data.weeks.join(',')+'\n';
+  data.tricks.forEach(t=>{
+    let row=t.name;
+    data.weeks.forEach(w=>row+=','+(t.attempts[w]||'—'));
+    csv+=row+'\n';
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='trucs.csv'; a.click();
+}
+
+function importData(event){
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      if(file.name.endsWith('.json')) data=JSON.parse(e.target.result);
+      else if(file.name.endsWith('.csv')){
+        const lines=e.target.result.split('\n');
+        const headers=lines[0].split(',');
+        data.weeks=headers.slice(1).map(h=>h.trim()); data.tricks=[];
+        for(let i=1;i<lines.length;i++){if(lines[i].trim()){
+          const cols=lines[i].split(',');
+          const trick={name:cols[0].trim(),level:'facil',attempts:{}};
+          data.weeks.forEach((w,idx)=>{ if(cols[idx+1]) trick.attempts[w]=cols[idx+1].trim(); });
+          data.tricks.push(trick);
+        }}
+      }
+      saveData(); renderTable(); renderSummary();
+      alert('Dades importades correctament!');
+    }catch(err){alert('Error en importar: '+err.message);}
   };
+  reader.readAsText(file);
+}
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  let data = { weeks: ['Setmana 1'], tricks: [] };
-
-  function saveData(){ set(ref(db,'tricksData'), data); }
-
-  function loadData(){
-    onValue(ref(db,'tricksData'), snapshot=>{
-      const val = snapshot.val();
-      if(val) data = val;
-      renderTable();
-      renderSummary();
-    });
-  }
-
-  function renderTable(){
-    const header=document.getElementById('tableHeader');
-    const body=document.getElementById('tableBody');
-    header.innerHTML='<th class="sticky">Truc</th>';
-    data.weeks.forEach((week, idx)=>{ header.innerHTML+=`<th>${week} <span class="delete-btn" onclick="deleteWeek(${idx})">✕</span></th>`; });
-    body.innerHTML='';
-    data.tricks.forEach((trick,tIdx)=>{
-      let row=`<tr><td class="sticky">${trick.name} <span class="level-badge level-${trick.level}">${trick.level}</span> <span class="delete-btn" onclick="deleteTrick(${tIdx})">✕</span></td>`;
-      data.weeks.forEach((week)=>{
-        const attempt=trick.attempts?.[week]||'—';
-        row+=`<td><select onchange="updateAttempt(${tIdx},'${week}',this.value)">
-          <option value="—" ${attempt==='—'?'selected':''}>—</option>
-          <option value="1" ${attempt==='1'?'selected':''}>1</option>
-          <option value="2" ${attempt==='2'?'selected':''}>2</option>
-          <option value="3" ${attempt==='3'?'selected':''}>3</option>
-          <option value="4" ${attempt==='4'?'selected':''}>4</option>
-          <option value="5" ${attempt==='5'?'selected':''}>5</option>
-        </select></td>`;
-      });
-      row+='</tr>';
-      body.innerHTML+=row;
-    });
-  }
-
-  function renderSummary(){
-    const summary=document.getElementById('summary');
-    summary.innerHTML='';
-    data.tricks.forEach(trick=>{
-      data.weeks.forEach(week=>{
-        const val=trick.attempts?.[week]||'—';
-        let percent=0,color='#9CA3AF';
-        if(val==='1'){percent=100;color='#10B981';}
-        else if(val==='2'){percent=80;color='#22C55E';}
-        else if(val==='3'){percent=60;color='#FACC15';}
-        else if(val==='4'){percent=40;color='#F97316';}
-        else if(val==='5'){percent=20;color='#F87171';}
-        summary.innerHTML+=`<div>${trick.name} (${week})<div class="progress-bar"><div class="progress-fill" style="width:${percent}%;background:${color}"></div></div></div>`;
-      });
-    });
-  }
-
-  function updateAttempt(trickIndex, week, value){
-    data.tricks[trickIndex].attempts[week]=value;
-    saveData(); renderSummary();
-  }
-
-  function openAddTrickModal(){document.getElementById('addTrickModal').style.display='flex';}
-  function openAddWeekModal(){document.getElementById('addWeekModal').style.display='flex';}
-  function closeModal(id){document.getElementById(id).style.display='none';}
-
-  function addTrick(){
-    const name=document.getElementById('trickNameInput').value;
-    const level=document.getElementById('trickLevelSelect').value;
-    if(name){ data.tricks.push({name,level,attempts:{}}); saveData(); renderTable(); renderSummary(); closeModal('addTrickModal'); }
-  }
-  function addWeek(){
-    const name=document.getElementById('weekNameInput').value;
-    if(name){ data.weeks.push(name); saveData(); renderTable(); closeModal('addWeekModal'); }
-  }
-  function deleteTrick(idx){ data.tricks.splice(idx,1); saveData(); renderTable(); renderSummary(); }
-  function deleteWeek(idx){ const w=data.weeks[idx]; data.weeks.splice(idx,1); data.tricks.forEach(t=>{delete t.attempts[w];}); saveData(); renderTable(); renderSummary(); }
-
-  loadData();
+loadData();
 </script>
 </body>
 </html>
