@@ -272,20 +272,10 @@
             margin-top: 20px;
         }
 
-        .chart-week {
-            margin-bottom: 30px;
-        }
-
-        .chart-week h3 {
-            color: #4F46E5;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-
         .chart-bar {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             padding: 10px;
             background: #F9FAFB;
             border-radius: 8px;
@@ -543,76 +533,39 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-            authDomain: "skate-tricks-list.firebaseapp.com",
-            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "skate-tricks-list",
-            storageBucket: "skate-tricks-list.firebasestorage.app",
-            messagingSenderId: "1038259811397",
-            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const dataRef = ref(database, 'tricksData');
-
-        window.data = {
-            weeks: ['S1', 'S2'],
+    <script>
+        let data = {
+            weeks: ['Setmana 1', 'Setmana 2'],
             tricks: [
                 { name: 'Ollie', level: 'facil', attempts: {} },
                 { name: 'Kickflip', level: 'mitja', attempts: {} }
             ]
         };
 
-        let isLoadingFromFirebase = false;
-
-        window.saveData = function() {
-            if (isLoadingFromFirebase) return;
-            
-            set(dataRef, window.data)
-                .then(() => {
-                    console.log('Dades guardades a Firebase');
-                })
-                .catch((error) => {
-                    console.error('Error guardant a Firebase:', error);
-                    localStorage.setItem('tricksData', JSON.stringify(window.data));
-                });
+        function init() {
+            loadData();
+            renderTable();
+            renderSummary();
         }
 
-        function loadFromFirebase() {
-            isLoadingFromFirebase = true;
-            onValue(dataRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    window.data = snapshot.val();
-                } else {
-                    window.saveData();
-                }
-                if (typeof window.renderTable === 'function') {
-                    window.renderTable();
-                    window.renderSummary();
-                }
-                isLoadingFromFirebase = false;
-            });
+        function saveData() {
+            localStorage.setItem('tricksData', JSON.stringify(data));
         }
 
-        loadFromFirebase();
-    </script>
-    <script>
+        function loadData() {
+            const saved = localStorage.getItem('tricksData');
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+        }
 
         function renderTable() {
             const header = document.getElementById('tableHeader');
             const body = document.getElementById('tableBody');
 
-            if (!header || !body) return;
-
             // Render header
             header.innerHTML = '<th>Truc</th><th>Nivell</th>';
-            window.data.weeks.forEach((week, index) => {
+            data.weeks.forEach((week, index) => {
                 header.innerHTML += `
                     <th>
                         ${week}
@@ -623,7 +576,7 @@
 
             // Render body
             body.innerHTML = '';
-            window.data.tricks.forEach((trick, trickIndex) => {
+            data.tricks.forEach((trick, trickIndex) => {
                 const levelClass = `level-${trick.level || 'mitja'}`;
                 const levelText = {
                     'facil': 'Fàcil',
@@ -642,7 +595,7 @@
                         </td>
                 `;
 
-                window.data.weeks.forEach((week, weekIndex) => {
+                data.weeks.forEach((week, weekIndex) => {
                     const attempt = trick.attempts[week] || '—';
                     row += `
                         <td>
@@ -663,8 +616,6 @@
             });
         }
 
-        window.renderTable = renderTable;
-
         function toggleMenu() {
             const menu = document.getElementById('menuDropdown');
             menu.classList.toggle('active');
@@ -681,58 +632,51 @@
 
         function renderSummary() {
             const summary = document.getElementById('summary');
-            if (!summary) return;
-            
             let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
 
-            // Crear una gràfica per cada setmana
-            window.data.weeks.forEach(week => {
-                html += `<div class="chart-week"><h3>${week}</h3>`;
+            data.tricks.forEach(trick => {
+                const attempts = Object.values(trick.attempts).filter(a => a !== '—');
+                const numericAttempts = attempts.map(a => parseInt(a)).filter(a => !isNaN(a));
+                
+                let bestAttempt = 0;
+                let displayValue = 'No aconseguit';
+                let percentage = 0;
+                let barColor = '#9CA3AF';
 
-                window.data.tricks.forEach(trick => {
-                    const attempt = trick.attempts[week];
+                if (numericAttempts.length > 0) {
+                    bestAttempt = Math.min(...numericAttempts);
+                    displayValue = `Intent ${bestAttempt}`;
+                    // Escala inversa: 1 = 100%, 5 = 20%
+                    percentage = ((6 - bestAttempt) / 5) * 100;
                     
-                    let displayValue = 'No aconseguit';
-                    let percentage = 0;
-                    let barColor = '#9CA3AF';
+                    // Colors segons l'intent
+                    if (bestAttempt === 1) barColor = '#10B981'; // Verd
+                    else if (bestAttempt === 2) barColor = '#34D399';
+                    else if (bestAttempt === 3) barColor = '#FBBF24'; // Groc
+                    else if (bestAttempt === 4) barColor = '#FB923C'; // Taronja
+                    else if (bestAttempt === 5) barColor = '#F87171'; // Vermell
+                }
 
-                    if (attempt && attempt !== '—') {
-                        const numAttempt = parseInt(attempt);
-                        displayValue = `Intent ${numAttempt}`;
-                        percentage = ((6 - numAttempt) / 5) * 100;
-                        
-                        if (numAttempt === 1) barColor = '#10B981';
-                        else if (numAttempt === 2) barColor = '#34D399';
-                        else if (numAttempt === 3) barColor = '#FBBF24';
-                        else if (numAttempt === 4) barColor = '#FB923C';
-                        else if (numAttempt === 5) barColor = '#F87171';
-                    }
-
-                    html += `
-                        <div class="chart-bar">
-                            <div class="chart-label">${trick.name}</div>
-                            <div class="chart-bar-container">
-                                <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
-                                    ${percentage > 15 ? displayValue : ''}
-                                </div>
+                html += `
+                    <div class="chart-bar">
+                        <div class="chart-label">${trick.name}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                ${percentage > 15 ? displayValue : ''}
                             </div>
-                            <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
                         </div>
-                    `;
-                });
-
-                html += '</div>';
+                        <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
+                    </div>
+                `;
             });
 
             html += '</div>';
             summary.innerHTML = html;
         }
 
-        window.renderSummary = renderSummary;
-
         function updateAttempt(trickIndex, week, value) {
-            window.data.tricks[trickIndex].attempts[week] = value;
-            window.saveData();
+            data.tricks[trickIndex].attempts[week] = value;
+            saveData();
             renderSummary();
         }
 
@@ -756,8 +700,8 @@
             const name = document.getElementById('trickNameInput').value.trim();
             const level = document.getElementById('trickLevelSelect').value;
             if (name) {
-                window.data.tricks.push({ name, level, attempts: {} });
-                window.saveData();
+                data.tricks.push({ name, level, attempts: {} });
+                saveData();
                 renderTable();
                 renderSummary();
                 closeModal('addTrickModal');
@@ -767,50 +711,49 @@
         function addWeek() {
             const name = document.getElementById('weekNameInput').value.trim();
             if (name) {
-                window.data.weeks.push(name);
-                window.saveData();
+                data.weeks.push(name);
+                saveData();
                 renderTable();
                 closeModal('addWeekModal');
             }
         }
 
         function deleteTrick(index) {
-            if (confirm(`Segur que vols eliminar "${window.data.tricks[index].name}"?`)) {
-                window.data.tricks.splice(index, 1);
-                window.saveData();
+            if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
+                data.tricks.splice(index, 1);
+                saveData();
                 renderTable();
                 renderSummary();
             }
         }
 
         function deleteWeek(index) {
-            if (confirm(`Segur que vols eliminar "${window.data.weeks[index]}"?`)) {
-                const weekName = window.data.weeks[index];
-                window.data.weeks.splice(index, 1);
-                window.data.tricks.forEach(trick => {
+            if (confirm(`Segur que vols eliminar "${data.weeks[index]}"?`)) {
+                const weekName = data.weeks[index];
+                data.weeks.splice(index, 1);
+                data.tricks.forEach(trick => {
                     delete trick.attempts[weekName];
                 });
-                window.saveData();
+                saveData();
                 renderTable();
                 renderSummary();
             }
         }
 
         function exportJSON() {
-            const dataStr = JSON.stringify(window.data, null, 2);
+            const dataStr = JSON.stringify(data, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            toggleMenu();
         }
 
         function exportCSV() {
-            let csv = 'Truc,Nivell,' + window.data.weeks.join(',') + '\n';
+            let csv = 'Truc,Nivell,' + data.weeks.join(',') + '\n';
             
-            window.data.tricks.forEach(trick => {
+            data.tricks.forEach(trick => {
                 const levelText = {
                     'facil': 'Fàcil',
                     'mitja': 'Mitjà',
@@ -818,7 +761,7 @@
                 }[trick.level || 'mitja'];
                 
                 let row = trick.name + ',' + levelText;
-                window.data.weeks.forEach(week => {
+                data.weeks.forEach(week => {
                     row += ',' + (trick.attempts[week] || '—');
                 });
                 csv += row + '\n';
@@ -830,7 +773,6 @@
             a.href = url;
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
-            toggleMenu();
         }
 
         function importData(event) {
@@ -841,16 +783,17 @@
             reader.onload = function(e) {
                 try {
                     if (file.name.endsWith('.json')) {
-                        window.data = JSON.parse(e.target.result);
-                        window.data.tricks.forEach(trick => {
+                        data = JSON.parse(e.target.result);
+                        // Assegurar que els trucs antics tinguin nivell
+                        data.tricks.forEach(trick => {
                             if (!trick.level) trick.level = 'mitja';
                         });
                     } else if (file.name.endsWith('.csv')) {
                         const lines = e.target.result.split('\n');
                         const headers = lines[0].split(',');
                         
-                        window.data.weeks = headers.slice(2).map(h => h.trim());
-                        window.data.tricks = [];
+                        data.weeks = headers.slice(2).map(h => h.trim());
+                        data.tricks = [];
 
                         for (let i = 1; i < lines.length; i++) {
                             if (lines[i].trim()) {
@@ -866,22 +809,21 @@
                                     attempts: {}
                                 };
                                 
-                                window.data.weeks.forEach((week, index) => {
+                                data.weeks.forEach((week, index) => {
                                     if (cols[index + 2]) {
                                         trick.attempts[week] = cols[index + 2].trim();
                                     }
                                 });
                                 
-                                window.data.tricks.push(trick);
+                                data.tricks.push(trick);
                             }
                         }
                     }
 
-                    window.saveData();
+                    saveData();
                     renderTable();
                     renderSummary();
                     alert('Dades importades correctament!');
-                    toggleMenu();
                 } catch (error) {
                     alert('Error en importar les dades: ' + error.message);
                 }
@@ -890,17 +832,6 @@
             event.target.value = '';
         }
 
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
-    <script>
         // Tancar modals amb ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -916,6 +847,13 @@
                 }
             });
         });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        init();
     </script>
 </body>
 </html>
