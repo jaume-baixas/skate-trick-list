@@ -52,6 +52,50 @@
             margin-bottom: 30px;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .skater-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skater-select {
+            padding: 8px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .skater-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+        }
+
+        .btn-add-skater {
+            padding: 8px 12px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-add-skater:hover {
+            background: #4338CA;
+        }
+
         .menu-button {
             position: relative;
         }
@@ -102,13 +146,6 @@
 
         .menu-item:hover {
             background: #F9FAFB;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
         }
 
         button {
@@ -179,7 +216,7 @@
         }
 
         th:nth-child(2) {
-            left: 200px;
+            left: 150px;
         }
 
         td:first-child,
@@ -191,40 +228,17 @@
 
         td:first-child {
             left: 0;
-            min-width: 200px;
+            min-width: 150px;
+            max-width: 150px;
         }
 
         td:nth-child(2) {
-            left: 200px;
+            left: 150px;
         }
 
         tr:hover td:first-child,
         tr:hover td:nth-child(2) {
             background: #F9FAFB;
-        }
-
-        .table-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            padding: 15px;
-            background: #F9FAFB;
-            border-radius: 0 0 10px 10px;
-        }
-
-        .btn-table {
-            padding: 8px 16px;
-            font-size: 0.85em;
-            background: white;
-            border: 2px solid #E5E7EB;
-            color: #374151;
-        }
-
-        .btn-table:hover {
-            border-color: #4F46E5;
-            background: white;
-            transform: none;
-            box-shadow: none;
         }
 
         td {
@@ -272,10 +286,20 @@
             margin-top: 20px;
         }
 
+        .chart-week {
+            margin-bottom: 30px;
+        }
+
+        .chart-week h3 {
+            color: #4F46E5;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
         .chart-bar {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             padding: 10px;
             background: #F9FAFB;
             border-radius: 8px;
@@ -350,7 +374,8 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="number"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #E5E7EB;
@@ -359,7 +384,8 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        input[type="number"]:focus {
             outline: none;
             border-color: #4F46E5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
@@ -415,15 +441,27 @@
             color: #991B1B;
         }
 
-        .best-attempt {
-            display: inline-block;
-            padding: 4px 12px;
-            background: #10B981;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-left: 8px;
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: #F9FAFB;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .btn-table {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            background: white;
+            border: 2px solid #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-table:hover {
+            border-color: #4F46E5;
+            background: white;
+            transform: none;
+            box-shadow: none;
         }
 
         .modal-select {
@@ -451,12 +489,22 @@
                 font-size: 1.5em;
             }
 
-            .controls {
+            .header-section {
                 flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
 
-            button {
+            .header-left {
                 width: 100%;
+            }
+
+            .skater-selector {
+                width: 100%;
+            }
+
+            .skater-select {
+                flex: 1;
             }
         }
     </style>
@@ -464,9 +512,17 @@
 <body>
     <div class="container">
         <div class="header-section">
-            <div>
-                <h1>🛹 Seguiment de Trucs</h1>
-                <p class="subtitle">Registra els teus progressos setmana a setmana</p>
+            <div class="header-left">
+                <div>
+                    <h1>🛹 Seguiment de Trucs</h1>
+                    <p class="subtitle">Registra els teus progressos sessió a sessió</p>
+                </div>
+                <div class="skater-selector">
+                    <select class="skater-select" id="skaterSelect" onchange="changeSkater()">
+                        <option value="default">Skater 1</option>
+                    </select>
+                    <button class="btn-add-skater" onclick="openAddSkaterModal()">+</button>
+                </div>
             </div>
             <div class="menu-button">
                 <button class="btn-secondary" onclick="toggleMenu()">
@@ -490,6 +546,7 @@
                 <thead>
                     <tr id="tableHeader">
                         <th>Truc</th>
+                        <th>Nivell</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -497,7 +554,7 @@
             </table>
             <div class="table-actions">
                 <button class="btn-table" onclick="openAddTrickModal()">➕ Afegir Truc</button>
-                <button class="btn-table" onclick="openAddWeekModal()">📅 Afegir Setmana</button>
+                <button class="btn-table" onclick="openAddSessionModal()">📅 Afegir Sessió</button>
             </div>
         </div>
 
@@ -521,60 +578,146 @@
         </div>
     </div>
 
-    <!-- Modal Afegir Setmana -->
-    <div class="modal" id="addWeekModal">
+    <!-- Modal Afegir Sessió -->
+    <div class="modal" id="addSessionModal">
         <div class="modal-content">
-            <h2>Afegir Nova Setmana</h2>
-            <input type="text" id="weekNameInput" placeholder="Nom de la setmana (ex: Setmana 1)...">
+            <h2>Afegir Nova Sessió</h2>
+            <input type="text" id="sessionNameInput" placeholder="Nom de la sessió (ex: Sessió 1)...">
             <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closeModal('addWeekModal')">Cancel·lar</button>
-                <button class="btn-primary" onclick="addWeek()">Afegir</button>
+                <button class="btn-secondary" onclick="closeModal('addSessionModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSession()">Afegir</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let data = {
-            weeks: ['Setmana 1', 'Setmana 2'],
-            tricks: [
-                { name: 'Ollie', level: 'facil', attempts: {} },
-                { name: 'Kickflip', level: 'mitja', attempts: {} }
-            ]
+    <!-- Modal Afegir Skater -->
+    <div class="modal" id="addSkaterModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Skater</h2>
+            <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
+            <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addSkaterModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSkater()">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+            authDomain: "skate-tricks-list.firebaseapp.com",
+            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skate-tricks-list",
+            storageBucket: "skate-tricks-list.firebasestorage.app",
+            messagingSenderId: "1038259811397",
+            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
         };
 
-        function init() {
-            loadData();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.allData = {
+            currentSkater: 'default',
+            skaters: {
+                'default': {
+                    name: 'Skater 1',
+                    age: null,
+                    sessions: ['Sessió 1', 'Sessió 2'],
+                    tricks: [
+                        { name: 'Ollie', level: 'facil', attempts: {} },
+                        { name: 'Kickflip', level: 'mitja', attempts: {} }
+                    ]
+                }
+            }
+        };
+
+        let isLoadingFromFirebase = false;
+
+        window.saveData = function() {
+            if (isLoadingFromFirebase) return;
+            
+            const dataRef = ref(database, 'allSkaterData');
+            set(dataRef, window.allData)
+                .then(() => {
+                    console.log('Dades guardades a Firebase');
+                })
+                .catch((error) => {
+                    console.error('Error guardant a Firebase:', error);
+                    localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
+                });
+        }
+
+        function loadFromFirebase() {
+            isLoadingFromFirebase = true;
+            const dataRef = ref(database, 'allSkaterData');
+            onValue(dataRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    window.allData = snapshot.val();
+                } else {
+                    window.saveData();
+                }
+                if (typeof window.updateSkaterList === 'function') {
+                    window.updateSkaterList();
+                    window.renderTable();
+                    window.renderSummary();
+                }
+                isLoadingFromFirebase = false;
+            });
+        }
+
+        loadFromFirebase();
+    </script>
+    <script>
+        function getCurrentData() {
+            return window.allData.skaters[window.allData.currentSkater];
+        }
+
+        function updateSkaterList() {
+            const select = document.getElementById('skaterSelect');
+            select.innerHTML = '';
+            
+            for (let skaterId in window.allData.skaters) {
+                const skater = window.allData.skaters[skaterId];
+                const option = document.createElement('option');
+                option.value = skaterId;
+                option.textContent = skater.name + (skater.age ? ` (${skater.age} anys)` : '');
+                if (skaterId === window.allData.currentSkater) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
+
+        window.updateSkaterList = updateSkaterList;
+
+        function changeSkater() {
+            window.allData.currentSkater = document.getElementById('skaterSelect').value;
             renderTable();
             renderSummary();
-        }
-
-        function saveData() {
-            localStorage.setItem('tricksData', JSON.stringify(data));
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem('tricksData');
-            if (saved) {
-                data = JSON.parse(saved);
-            }
+            window.saveData();
         }
 
         function renderTable() {
             const header = document.getElementById('tableHeader');
             const body = document.getElementById('tableBody');
+            const data = getCurrentData();
 
-            // Render header
+            if (!header || !body) return;
+
             header.innerHTML = '<th>Truc</th><th>Nivell</th>';
-            data.weeks.forEach((week, index) => {
+            data.sessions.forEach((session, index) => {
                 header.innerHTML += `
                     <th>
-                        ${week}
-                        <button class="delete-btn" onclick="event.stopPropagation(); deleteWeek(${index})" title="Eliminar setmana">✕</button>
+                        ${session}
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteSession(${index})" title="Eliminar sessió">✕</button>
                     </th>
                 `;
             });
 
-            // Render body
             body.innerHTML = '';
             data.tricks.forEach((trick, trickIndex) => {
                 const levelClass = `level-${trick.level || 'mitja'}`;
@@ -595,17 +738,18 @@
                         </td>
                 `;
 
-                data.weeks.forEach((week, weekIndex) => {
-                    const attempt = trick.attempts[week] || '—';
+                data.sessions.forEach((session) => {
+                    const attempt = trick.attempts[session] || '—';
                     row += `
                         <td>
-                            <select onchange="updateAttempt(${trickIndex}, '${week}', this.value)">
+                            <select onchange="updateAttempt(${trickIndex}, '${session}', this.value)">
                                 <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
                                 <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
                                 <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
                                 <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
                                 <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
                                 <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                                <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
                             </select>
                         </td>
                     `;
@@ -616,67 +760,69 @@
             });
         }
 
-        function toggleMenu() {
-            const menu = document.getElementById('menuDropdown');
-            menu.classList.toggle('active');
-        }
-
-        // Tancar menú quan es clica fora
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('menuDropdown');
-            const button = e.target.closest('.menu-button');
-            if (!button && menu) {
-                menu.classList.remove('active');
-            }
-        });
+        window.renderTable = renderTable;
 
         function renderSummary() {
             const summary = document.getElementById('summary');
+            const data = getCurrentData();
+            if (!summary) return;
+            
             let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
 
-            data.tricks.forEach(trick => {
-                const attempts = Object.values(trick.attempts).filter(a => a !== '—');
-                const numericAttempts = attempts.map(a => parseInt(a)).filter(a => !isNaN(a));
-                
-                let bestAttempt = 0;
-                let displayValue = 'No aconseguit';
-                let percentage = 0;
-                let barColor = '#9CA3AF';
+            data.sessions.forEach(session => {
+                html += `<div class="chart-week"><h3>${session}</h3>`;
 
-                if (numericAttempts.length > 0) {
-                    bestAttempt = Math.min(...numericAttempts);
-                    displayValue = `Intent ${bestAttempt}`;
-                    // Escala inversa: 1 = 100%, 5 = 20%
-                    percentage = ((6 - bestAttempt) / 5) * 100;
+                data.tricks.forEach(trick => {
+                    const attempt = trick.attempts[session];
                     
-                    // Colors segons l'intent
-                    if (bestAttempt === 1) barColor = '#10B981'; // Verd
-                    else if (bestAttempt === 2) barColor = '#34D399';
-                    else if (bestAttempt === 3) barColor = '#FBBF24'; // Groc
-                    else if (bestAttempt === 4) barColor = '#FB923C'; // Taronja
-                    else if (bestAttempt === 5) barColor = '#F87171'; // Vermell
-                }
+                    let displayValue = 'No aconseguit';
+                    let percentage = 0;
+                    let barColor = '#9CA3AF';
 
-                html += `
-                    <div class="chart-bar">
-                        <div class="chart-label">${trick.name}</div>
-                        <div class="chart-bar-container">
-                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
-                                ${percentage > 15 ? displayValue : ''}
+                    if (attempt && attempt !== '—') {
+                        if (attempt === '+5') {
+                            displayValue = '+5 intents';
+                            percentage = 10;
+                            barColor = '#DC2626';
+                        } else {
+                            const numAttempt = parseInt(attempt);
+                            displayValue = `Intent ${numAttempt}`;
+                            percentage = ((6 - numAttempt) / 5) * 100;
+                            
+                            if (numAttempt === 1) barColor = '#10B981';
+                            else if (numAttempt === 2) barColor = '#34D399';
+                            else if (numAttempt === 3) barColor = '#FBBF24';
+                            else if (numAttempt === 4) barColor = '#FB923C';
+                            else if (numAttempt === 5) barColor = '#F87171';
+                        }
+                    }
+
+                    html += `
+                        <div class="chart-bar">
+                            <div class="chart-label">${trick.name}</div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                    ${percentage > 15 ? displayValue : ''}
+                                </div>
                             </div>
+                            <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
                         </div>
-                        <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
-                    </div>
-                `;
+                    `;
+                });
+
+                html += '</div>';
             });
 
             html += '</div>';
             summary.innerHTML = html;
         }
 
-        function updateAttempt(trickIndex, week, value) {
-            data.tricks[trickIndex].attempts[week] = value;
-            saveData();
+        window.renderSummary = renderSummary;
+
+        function updateAttempt(trickIndex, session, value) {
+            const data = getCurrentData();
+            data.tricks[trickIndex].attempts[session] = value;
+            window.saveData();
             renderSummary();
         }
 
@@ -686,10 +832,17 @@
             document.getElementById('trickNameInput').focus();
         }
 
-        function openAddWeekModal() {
-            document.getElementById('addWeekModal').classList.add('active');
-            document.getElementById('weekNameInput').value = '';
-            document.getElementById('weekNameInput').focus();
+        function openAddSessionModal() {
+            document.getElementById('addSessionModal').classList.add('active');
+            document.getElementById('sessionNameInput').value = '';
+            document.getElementById('sessionNameInput').focus();
+        }
+
+        function openAddSkaterModal() {
+            document.getElementById('addSkaterModal').classList.add('active');
+            document.getElementById('skaterNameInput').value = '';
+            document.getElementById('skaterAgeInput').value = '';
+            document.getElementById('skaterNameInput').focus();
         }
 
         function closeModal(modalId) {
@@ -700,48 +853,77 @@
             const name = document.getElementById('trickNameInput').value.trim();
             const level = document.getElementById('trickLevelSelect').value;
             if (name) {
+                const data = getCurrentData();
                 data.tricks.push({ name, level, attempts: {} });
-                saveData();
+                window.saveData();
                 renderTable();
                 renderSummary();
                 closeModal('addTrickModal');
             }
         }
 
-        function addWeek() {
-            const name = document.getElementById('weekNameInput').value.trim();
+        function addSession() {
+            const name = document.getElementById('sessionNameInput').value.trim();
             if (name) {
-                data.weeks.push(name);
-                saveData();
+                const data = getCurrentData();
+                data.sessions.push(name);
+                window.saveData();
                 renderTable();
-                closeModal('addWeekModal');
+                closeModal('addSessionModal');
+            }
+        }
+
+        function addSkater() {
+            const name = document.getElementById('skaterNameInput').value.trim();
+            const age = document.getElementById('skaterAgeInput').value;
+            if (name) {
+                const skaterId = 'skater_' + Date.now();
+                window.allData.skaters[skaterId] = {
+                    name: name,
+                    age: age ? parseInt(age) : null,
+                    sessions: ['Sessió 1'],
+                    tricks: []
+                };
+                window.allData.currentSkater = skaterId;
+                window.saveData();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                closeModal('addSkaterModal');
             }
         }
 
         function deleteTrick(index) {
+            const data = getCurrentData();
             if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
                 data.tricks.splice(index, 1);
-                saveData();
+                window.saveData();
                 renderTable();
                 renderSummary();
             }
         }
 
-        function deleteWeek(index) {
-            if (confirm(`Segur que vols eliminar "${data.weeks[index]}"?`)) {
-                const weekName = data.weeks[index];
-                data.weeks.splice(index, 1);
+        function deleteSession(index) {
+            const data = getCurrentData();
+            if (confirm(`Segur que vols eliminar "${data.sessions[index]}"?`)) {
+                const sessionName = data.sessions[index];
+                data.sessions.splice(index, 1);
                 data.tricks.forEach(trick => {
-                    delete trick.attempts[weekName];
+                    delete trick.attempts[sessionName];
                 });
-                saveData();
+                window.saveData();
                 renderTable();
                 renderSummary();
             }
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('active');
         }
 
         function exportJSON() {
-            const dataStr = JSON.stringify(data, null, 2);
+            const dataStr = JSON.stringify(window.allData, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -749,111 +931,3 @@
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         }
-
-        function exportCSV() {
-            let csv = 'Truc,Nivell,' + data.weeks.join(',') + '\n';
-            
-            data.tricks.forEach(trick => {
-                const levelText = {
-                    'facil': 'Fàcil',
-                    'mitja': 'Mitjà',
-                    'dificil': 'Difícil'
-                }[trick.level || 'mitja'];
-                
-                let row = trick.name + ',' + levelText;
-                data.weeks.forEach(week => {
-                    row += ',' + (trick.attempts[week] || '—');
-                });
-                csv += row + '\n';
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    if (file.name.endsWith('.json')) {
-                        data = JSON.parse(e.target.result);
-                        // Assegurar que els trucs antics tinguin nivell
-                        data.tricks.forEach(trick => {
-                            if (!trick.level) trick.level = 'mitja';
-                        });
-                    } else if (file.name.endsWith('.csv')) {
-                        const lines = e.target.result.split('\n');
-                        const headers = lines[0].split(',');
-                        
-                        data.weeks = headers.slice(2).map(h => h.trim());
-                        data.tricks = [];
-
-                        for (let i = 1; i < lines.length; i++) {
-                            if (lines[i].trim()) {
-                                const cols = lines[i].split(',');
-                                const levelMap = {
-                                    'Fàcil': 'facil',
-                                    'Mitjà': 'mitja',
-                                    'Difícil': 'dificil'
-                                };
-                                const trick = {
-                                    name: cols[0].trim(),
-                                    level: levelMap[cols[1].trim()] || 'mitja',
-                                    attempts: {}
-                                };
-                                
-                                data.weeks.forEach((week, index) => {
-                                    if (cols[index + 2]) {
-                                        trick.attempts[week] = cols[index + 2].trim();
-                                    }
-                                });
-                                
-                                data.tricks.push(trick);
-                            }
-                        }
-                    }
-
-                    saveData();
-                    renderTable();
-                    renderSummary();
-                    alert('Dades importades correctament!');
-                } catch (error) {
-                    alert('Error en importar les dades: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        // Tancar modals amb ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-            }
-        });
-
-        // Tancar modal fent clic fora
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
-
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
-        init();
-    </script>
-</body>
-</html>
