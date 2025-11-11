@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seguiment de Trucs</title>
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trucs">
+    <title>Seguiment de Trucs</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -508,200 +513,498 @@
     </style>
 </head>
 <body>
-  <h1>🛹 Seguiment de Trucs</h1>
+    <div class="container">
+        <div class="header-section">
+            <div class="header-left">
+                <div class="title-area">
+                    <h1>🛹 Seguiment de Trucs</h1>
+                    <p class="subtitle">Registra els teus progressos sessió a sessió</p>
+                </div>
+                <div class="skater-selector">
+                    <select class="skater-select" id="skaterSelect">
+                        <option value="default">Skater 1</option>
+                    </select>
+                    <button class="btn-add-skater" id="btnAddSkater">+</button>
+                </div>
+            </div>
+            <div class="menu-button">
+                <button class="btn-secondary" id="btnMenu">
+                    <div class="burger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+                <div class="menu-dropdown" id="menuDropdown">
+                    <div class="menu-item" id="btnExportJSON">💾 Exportar JSON</div>
+                    <div class="menu-item" id="btnExportCSV">📊 Exportar CSV</div>
+                    <div class="menu-item" id="btnImport">📥 Importar Dades</div>
+                </div>
+                <input type="file" id="importFile" style="display:none" accept=".json,.csv">
+            </div>
+        </div>
 
-  <label>Selecciona Skater:</label>
-  <select id="skaterSelect"></select>
-  <button onclick="openAddSkaterModal()">+ Nou Skater</button>
-  <br />
+        <div class="table-container">
+            <table id="tricksTable">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Truc</th>
+                        <th>Nivell</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="table-actions">
+                <button class="btn-table" onclick="openAddTrickModal()">➕ Afegir Truc</button>
+                <button class="btn-table" onclick="openAddSessionModal()">📅 Afegir Sessió</button>
+            </div>
+        </div>
 
-  <button onclick="openAddTrickModal()">➕ Afegir Truc</button>
-  <button onclick="openAddSessionModal()">📅 Afegir Sessió</button>
-
-  <table id="tricksTable">
-    <thead>
-      <tr><th>Truc</th><th>Nivell</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <button onclick="exportToJSON()">💾 Exportar JSON</button>
-  <button onclick="exportToCSV()">📊 Exportar CSV</button>
-  <input type="file" id="importInput" accept=".json" onchange="importData(event)" />
-
-  <!-- 🔹 MODAL: Afegir Truc -->
-  <div id="addTrickModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Afegir Nou Truc</h3>
-      <input id="newTrickName" type="text" placeholder="Nom del truc" />
-      <select id="newTrickLevel">
-        <option value="fàcil">Fàcil</option>
-        <option value="mitjà" selected>Mitjà</option>
-        <option value="difícil">Difícil</option>
-      </select>
-      <button onclick="closeModal('addTrickModal')">Cancel·lar</button>
-      <button onclick="addTrick()">Afegir</button>
+        <div class="summary" id="summary"></div>
     </div>
-  </div>
 
-  <!-- 🔹 MODAL: Afegir Sessió -->
-  <div id="addSessionModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Afegir Nova Sessió</h3>
-      <input id="newSessionName" type="text" placeholder="Nom de la sessió" />
-      <button onclick="closeModal('addSessionModal')">Cancel·lar</button>
-      <button onclick="addSession()">Afegir</button>
+    <!-- Modal Afegir Truc -->
+    <div class="modal" id="addTrickModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Truc</h2>
+            <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+            <select id="trickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja" selected>Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addTrickModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addTrick()">Afegir</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- 🔹 MODAL: Afegir Skater -->
-  <div id="addSkaterModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Afegir Nou Skater</h3>
-      <input id="newSkaterName" type="text" placeholder="Nom" />
-      <input id="newSkaterAge" type="number" placeholder="Edat" />
-      <button onclick="closeModal('addSkaterModal')">Cancel·lar</button>
-      <button onclick="addSkater()">Afegir</button>
+    <!-- Modal Afegir Sessió -->
+    <div class="modal" id="addSessionModal">
+        <div class="modal-content">
+            <h2>Afegir Nova Sessió</h2>
+            <input type="text" id="sessionNameInput" placeholder="Nom de la sessió (ex: Sessió 1)...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addSessionModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSession()">Afegir</button>
+            </div>
+        </div>
     </div>
-  </div>
 
- <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    <!-- Modal Afegir Skater -->
+    <div class="modal" id="addSkaterModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Skater</h2>
+            <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
+            <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addSkaterModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSkater()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-    authDomain: "skate-tricks-list.firebaseapp.com",
-    databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "skate-tricks-list",
-    storageBucket: "skate-tricks-list.firebasestorage.app",
-    messagingSenderId: "1038259811397",
-    appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-  };
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    console.log("✅ Firebase inicialitzat correctament");
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+            authDomain: "skate-tricks-list.firebaseapp.com",
+            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skate-tricks-list",
+            storageBucket: "skate-tricks-list.firebasestorage.app",
+            messagingSenderId: "1038259811397",
+            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+        };
 
-    // -------------------------------
-    // FUNCIONS MODALS
-    // -------------------------------
-    window.openAddTrickModal = () => document.getElementById("addTrickModal").classList.remove("hidden");
-    window.openAddSessionModal = () => document.getElementById("addSessionModal").classList.remove("hidden");
-    window.openAddSkaterModal = () => document.getElementById("addSkaterModal").classList.remove("hidden");
-    window.closeModal = id => document.getElementById(id).classList.add("hidden");
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-    // -------------------------------
-    // FUNCIONS DE GESTIÓ DE TRUCS
-    // -------------------------------
-    window.addTrick = () => {
-      const name = document.getElementById("newTrickName").value.trim();
-      const level = document.getElementById("newTrickLevel").value;
-      if (!name) return alert("Introdueix un nom de truc");
-      const table = document.querySelector("#tricksTable tbody");
-      const row = table.insertRow();
-      row.innerHTML = `<td>${name}</td><td>${level}</td>`;
-      closeModal("addTrickModal");
-      saveToFirebase();
-    };
+        // Dades per defecte
+        if (!window.allData) {
+            window.allData = {
+                currentSkater: 'default',
+                skaters: {
+                    'default': {
+                        name: 'Skater 1',
+                        age: null,
+                        sessions: ['Sessió 1', 'Sessió 2'],
+                        tricks: [
+                            { name: 'Ollie', level: 'facil', attempts: {} },
+                            { name: 'Kickflip', level: 'mitja', attempts: {} }
+                        ]
+                    }
+                }
+            };
+        }
 
-    window.addSession = () => {
-      const name = document.getElementById("newSessionName").value.trim();
-      if (!name) return alert("Introdueix un nom de sessió");
-      alert(`Sessió "${name}" afegida (exemple)`);
-      closeModal("addSessionModal");
-    };
+        let isLoadingFromFirebase = false;
+        let firebaseInitialized = false;
 
-    window.addSkater = () => {
-      const name = document.getElementById("newSkaterName").value.trim();
-      const age = document.getElementById("newSkaterAge").value;
-      if (!name) return alert("Introdueix un nom de skater");
-      const select = document.getElementById("skaterSelect");
-      const option = document.createElement("option");
-      option.textContent = name;
-      option.value = name;
-      select.appendChild(option);
-      select.value = name;
-      closeModal("addSkaterModal");
-      saveToFirebase();
-    };
+        // Funció per guardar a Firebase
+        window.saveData = function() {
+            if (isLoadingFromFirebase || !firebaseInitialized) {
+                console.log('Esperant inicialització de Firebase...');
+                return;
+            }
+            
+            try {
+                const dataRef = ref(database, 'allSkaterData');
+                set(dataRef, window.allData)
+                    .then(() => {
+                        console.log('✅ Dades guardades a Firebase');
+                    })
+                    .catch((error) => {
+                        console.error('❌ Error guardant a Firebase:', error);
+                        // Backup local
+                        localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
+                    });
+            } catch (error) {
+                console.error('❌ Error en saveData:', error);
+                localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
+            }
+        }
 
-    // -------------------------------
-    // EXPORTAR / IMPORTAR
-    // -------------------------------
-    window.exportToJSON = () => {
-      const data = getCurrentData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "trucs.json";
-      a.click();
-    };
+        // Carregar dades de Firebase
+        function loadFromFirebase() {
+            isLoadingFromFirebase = true;
+            
+            try {
+                const dataRef = ref(database, 'allSkaterData');
+                onValue(dataRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        window.allData = snapshot.val();
+                        console.log('✅ Dades carregades de Firebase');
+                    } else {
+                        console.log('ℹ️ No hi ha dades a Firebase, usant dades per defecte');
+                        // Carregar de localStorage si existeix
+                        const localData = localStorage.getItem('allSkaterData');
+                        if (localData) {
+                            try {
+                                window.allData = JSON.parse(localData);
+                                console.log('✅ Dades carregades de localStorage');
+                            } catch (e) {
+                                console.log('ℹ️ Usant dades per defecte');
+                            }
+                        }
+                        // Guardar dades inicials a Firebase
+                        window.saveData();
+                    }
+                    
+                    firebaseInitialized = true;
+                    isLoadingFromFirebase = false;
+                    
+                    // Inicialitzar interfície
+                    if (window.initApp) {
+                        window.initApp();
+                    }
+                }, (error) => {
+                    console.error('❌ Error carregant de Firebase:', error);
+                    // Intentar carregar de localStorage
+                    const localData = localStorage.getItem('allSkaterData');
+                    if (localData) {
+                        try {
+                            window.allData = JSON.parse(localData);
+                            console.log('✅ Dades carregades de localStorage (fallback)');
+                        } catch (e) {
+                            console.log('ℹ️ Usant dades per defecte');
+                        }
+                    }
+                    
+                    firebaseInitialized = true;
+                    isLoadingFromFirebase = false;
+                    
+                    if (window.initApp) {
+                        window.initApp();
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Error inicialitzant Firebase:', error);
+                firebaseInitialized = false;
+                isLoadingFromFirebase = false;
+                
+                // Carregar dades locals com a fallback
+                const localData = localStorage.getItem('allSkaterData');
+                if (localData) {
+                    try {
+                        window.allData = JSON.parse(localData);
+                        console.log('✅ Dades carregades de localStorage (error Firebase)');
+                    } catch (e) {
+                        console.log('ℹ️ Usant dades per defecte');
+                    }
+                }
+                
+                if (window.initApp) {
+                    window.initApp();
+                }
+            }
+        }
 
-    window.exportToCSV = () => {
-      const rows = [["Truc", "Nivell"]];
-      document.querySelectorAll("#tricksTable tbody tr").forEach(tr => {
-        const cells = tr.querySelectorAll("td");
-        rows.push([cells[0].textContent, cells[1].textContent]);
-      });
-      const csv = rows.map(r => r.join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "trucs.csv";
-      a.click();
-    };
+        // Iniciar càrrega
+        loadFromFirebase();
+    </script>
+    <script>
+        // Funcions globals disponibles immediatament
+        
+        function getCurrentData() {
+            return window.allData.skaters[window.allData.currentSkater];
+        }
 
-    window.importData = event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const data = JSON.parse(e.target.result);
-        renderTable(data.trucs);
-      };
-      reader.readAsText(file);
-    };
+        function updateSkaterList() {
+            const select = document.getElementById('skaterSelect');
+            if (!select) return;
+            
+            select.innerHTML = '';
+            
+            for (let skaterId in window.allData.skaters) {
+                const skater = window.allData.skaters[skaterId];
+                const option = document.createElement('option');
+                option.value = skaterId;
+                option.textContent = skater.name + (skater.age ? ` (${skater.age} anys)` : '');
+                if (skaterId === window.allData.currentSkater) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
 
-    // -------------------------------
-    // FUNCIONS DE SUPORT
-    // -------------------------------
-    function getCurrentData() {
-      const trucs = [];
-      document.querySelectorAll("#tricksTable tbody tr").forEach(tr => {
-        const [name, level] = tr.querySelectorAll("td");
-        trucs.push({ nom: name.textContent, nivell: level.textContent });
-      });
-      return { trucs };
-    }
+        window.changeSkater = function() {
+            window.allData.currentSkater = document.getElementById('skaterSelect').value;
+            renderTable();
+            renderSummary();
+            window.saveData();
+        }
 
-    function renderTable(trucs) {
-      const tbody = document.querySelector("#tricksTable tbody");
-      tbody.innerHTML = "";
-      trucs.forEach(t => {
-        const row = tbody.insertRow();
-        row.innerHTML = `<td>${t.nom}</td><td>${t.nivell}</td>`;
-      });
-    }
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            const data = getCurrentData();
 
-    async function saveToFirebase() {
-      const data = getCurrentData();
-      const skater = document.getElementById("skaterSelect").value || "Skater 1";
-      await set(ref(db, `skaters/${skater}`), data);
-      console.log("💾 Dades guardades a Firebase");
-    }
+            if (!header || !body) return;
 
-    async function loadFromFirebase() {
-      const skater = "Skater 1";
-      const snapshot = await get(ref(db, `skaters/${skater}`));
-      if (snapshot.exists()) renderTable(snapshot.val().trucs);
-      else console.warn("⚠️ No hi ha dades a Firebase, creant estructura inicial...");
-    }
+            header.innerHTML = '<th>Truc</th><th>Nivell</th>';
+            data.sessions.forEach((session, index) => {
+                header.innerHTML += `
+                    <th>
+                        ${session}
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteSession(${index})" title="Eliminar sessió">✕</button>
+                    </th>
+                `;
+            });
 
-    loadFromFirebase();
-  </script>
-</body>
-</html>
+            body.innerHTML = '';
+            data.tricks.forEach((trick, trickIndex) => {
+                const levelClass = `level-${trick.level || 'mitja'}`;
+                const levelText = {
+                    'facil': 'Fàcil',
+                    'mitja': 'Mitjà',
+                    'dificil': 'Difícil'
+                }[trick.level || 'mitja'];
+
+                let row = `
+                    <tr>
+                        <td>
+                            <strong>${trick.name}</strong>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteTrick(${trickIndex})" title="Eliminar truc">✕</button>
+                        </td>
+                        <td>
+                            <span class="level-badge ${levelClass}">${levelText}</span>
+                        </td>
+                `;
+
+                data.sessions.forEach((session) => {
+                    const attempt = trick.attempts[session] || '—';
+                    row += `
+                        <td>
+                            <select onchange="updateAttempt(${trickIndex}, '${session}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                                <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
+                            </select>
+                        </td>
+                    `;
+                });
+
+                row += '</tr>';
+                body.innerHTML += row;
+            });
+        }
+
+        function renderSummary() {
+            const summary = document.getElementById('summary');
+            const data = getCurrentData();
+            if (!summary) return;
+            
+            let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
+
+            data.sessions.forEach(session => {
+                html += `<div class="chart-week"><h3>${session}</h3>`;
+
+                data.tricks.forEach(trick => {
+                    const attempt = trick.attempts[session];
+                    
+                    let displayValue = 'No aconseguit';
+                    let percentage = 0;
+                    let barColor = '#9CA3AF';
+
+                    if (attempt && attempt !== '—') {
+                        if (attempt === '+5') {
+                            displayValue = '+5 intents';
+                            percentage = 10;
+                            barColor = '#DC2626';
+                        } else {
+                            const numAttempt = parseInt(attempt);
+                            displayValue = `Intent ${numAttempt}`;
+                            percentage = ((6 - numAttempt) / 5) * 100;
+                            
+                            if (numAttempt === 1) barColor = '#10B981';
+                            else if (numAttempt === 2) barColor = '#34D399';
+                            else if (numAttempt === 3) barColor = '#FBBF24';
+                            else if (numAttempt === 4) barColor = '#FB923C';
+                            else if (numAttempt === 5) barColor = '#F87171';
+                        }
+                    }
+
+                    html += `
+                        <div class="chart-bar">
+                            <div class="chart-label">${trick.name}</div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                    ${percentage > 15 ? displayValue : ''}
+                                </div>
+                            </div>
+                            <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            summary.innerHTML = html;
+        }
+
+        window.updateAttempt = function(trickIndex, session, value) {
+            const data = getCurrentData();
+            data.tricks[trickIndex].attempts[session] = value;
+            window.saveData();
+            renderSummary();
+        }
+
+        function openAddTrickModal() {
+            document.getElementById('addTrickModal').classList.add('active');
+            document.getElementById('trickNameInput').value = '';
+            document.getElementById('trickNameInput').focus();
+        }
+
+        function openAddSessionModal() {
+            document.getElementById('addSessionModal').classList.add('active');
+            document.getElementById('sessionNameInput').value = '';
+            document.getElementById('sessionNameInput').focus();
+        }
+
+        function openAddSkaterModal() {
+            document.getElementById('addSkaterModal').classList.add('active');
+            document.getElementById('skaterNameInput').value = '';
+            document.getElementById('skaterAgeInput').value = '';
+            document.getElementById('skaterNameInput').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addTrick() {
+            const name = document.getElementById('trickNameInput').value.trim();
+            const level = document.getElementById('trickLevelSelect').value;
+            if (name) {
+                const data = getCurrentData();
+                data.tricks.push({ name, level, attempts: {} });
+                window.saveData();
+                renderTable();
+                renderSummary();
+                closeModal('addTrickModal');
+            }
+        }
+
+        function addSession() {
+            const name = document.getElementById('sessionNameInput').value.trim();
+            if (name) {
+                const data = getCurrentData();
+                data.sessions.push(name);
+                window.saveData();
+                renderTable();
+                closeModal('addSessionModal');
+            }
+        }
+
+        function addSkater() {
+            const name = document.getElementById('skaterNameInput').value.trim();
+            const age = document.getElementById('skaterAgeInput').value;
+            if (name) {
+                const skaterId = 'skater_' + Date.now();
+                window.allData.skaters[skaterId] = {
+                    name: name,
+                    age: age ? parseInt(age) : null,
+                    sessions: ['Sessió 1'],
+                    tricks: []
+                };
+                window.allData.currentSkater = skaterId;
+                window.saveData();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                closeModal('addSkaterModal');
+            }
+        }
+
+        function deleteTrick(index) {
+            const data = getCurrentData();
+            if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
+                data.tricks.splice(index, 1);
+                window.saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function deleteSession(index) {
+            const data = getCurrentData();
+            if (confirm(`Segur que vols eliminar "${data.sessions[index]}"?`)) {
+                const sessionName = data.sessions[index];
+                data.sessions.splice(index, 1);
+                data.tricks.forEach(trick => {
+                    delete trick.attempts[sessionName];
+                });
+                window.saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('active');
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(window.allData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            toggleMenu();
+        }
