@@ -512,6 +512,63 @@
         }
     </style>
 </head>
+    <!-- MODALS -->
+<div id="addTrickModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Afegir Nou Truc</h3>
+    <input id="newTrickName" type="text" placeholder="Nom del truc" />
+    <select id="newTrickLevel">
+      <option value="facil">Fàcil</option>
+      <option value="mitja" selected>Mitjà</option>
+      <option value="dificil">Difícil</option>
+    </select>
+    <button onclick="closeModal('addTrickModal')">Cancel·lar</button>
+    <button onclick="addTrick()">Afegir</button>
+  </div>
+</div>
+
+<style>
+.modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal.hidden { display: none; }
+.modal-content {
+  background: white; padding: 20px; border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+</style>
+
+<script>
+// ---- FUNCIONS PER OBRIR / TANCAR MODALS ----
+function openAddTrickModal() {
+  document.getElementById("addTrickModal").classList.remove("hidden");
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add("hidden");
+}
+
+// ---- EXEMPLE DE FUNCIÓ PER AFEGIR UN TRUC ----
+function addTrick() {
+  const name = document.getElementById("newTrickName").value;
+  const level = document.getElementById("newTrickLevel").value;
+
+  if (!name) return alert("Introdueix el nom del truc");
+
+  const table = document.querySelector("table");
+  const row = table.insertRow(-1);
+  row.innerHTML = `<td>${name}</td><td>${level}</td>`;
+
+  closeModal("addTrickModal");
+}
+
+// ---- CONNECTA BOTONS AMB LES FUNCIONS ----
+document.querySelector("button:contains('➕ Afegir Truc')")?.addEventListener("click", openAddTrickModal);
+</script>
+
 <body>
     <div class="container">
         <div class="header-section">
