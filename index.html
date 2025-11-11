@@ -1,189 +1,1010 @@
 <!DOCTYPE html>
-
 <html lang="ca">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seguiment de Trucs</title>
-<style>
-/* ---------- ESTILS GENERALS ---------- */
-body { font-family: sans-serif; margin: 20px; background: #F3F4F6; }
-.container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-h1 { color: #1F2937; margin-bottom: 10px; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { padding: 12px; border-bottom: 1px solid #E5E7EB; text-align: left; }
-th { background: #F9FAFB; position: sticky; top: 0; }
-.level-badge { padding: 4px 12px; border-radius: 12px; font-weight: 600; text-transform: uppercase; font-size: 0.75em; }
-.level-facil { background: #D1FAE5; color: #065F46; }
-.level-mitja { background: #FED7AA; color: #9A3412; }
-.level-dificil { background: #FEE2E2; color: #991B1B; }
-button { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; }
-.btn-primary { background: #4F46E5; color: white; }
-.btn-secondary { background: #E5E7EB; color: #374151; }
-.modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center; }
-.modal.active { display:flex; }
-.modal-content { background:white; padding:20px; border-radius:15px; max-width:400px; width:90%; }
-.modal-content input, .modal-content select { width:100%; margin-bottom:10px; padding:8px; border-radius:8px; border:2px solid #E5E7EB; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trucs">
+    <title>Seguiment de Trucs</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #F3F4F6;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1F2937;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .title-area {
+            margin-bottom: 15px;
+        }
+
+        .skater-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .skater-select {
+            padding: 8px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .skater-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+        }
+
+        .btn-add-skater {
+            padding: 8px 12px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-add-skater:hover {
+            background: #4338CA;
+        }
+
+        .menu-button {
+            position: relative;
+        }
+
+        .burger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+        }
+
+        .burger-icon span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: #374151;
+            border-radius: 2px;
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            margin-top: 10px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #F9FAFB;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #D1D5DB;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.9em;
+        }
+
+        th:first-child,
+        th:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background: #F9FAFB;
+        }
+
+        th:nth-child(2) {
+            left: 150px;
+        }
+
+        td:first-child,
+        td:nth-child(2) {
+            position: sticky;
+            background: white;
+            z-index: 5;
+        }
+
+        td:first-child {
+            left: 0;
+            min-width: 150px;
+            max-width: 150px;
+        }
+
+        td:nth-child(2) {
+            left: 150px;
+        }
+
+        tr:hover td:first-child,
+        tr:hover td:nth-child(2) {
+            background: #F9FAFB;
+        }
+
+        td {
+            background: white;
+        }
+
+        tr:hover td {
+            background: #F9FAFB;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #4F46E5;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .summary {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #1F2937;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+
+        .chart-week {
+            margin-bottom: 30px;
+        }
+
+        .chart-week h3 {
+            color: #4F46E5;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #F9FAFB;
+            border-radius: 8px;
+        }
+
+        .chart-label {
+            width: 200px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            height: 30px;
+            background: #E5E7EB;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .chart-value {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: #6B7280;
+            font-size: 0.9em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            color: #4F46E5;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .delete-btn:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-facil {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .level-mitja {
+            background: #FED7AA;
+            color: #9A3412;
+        }
+
+        .level-dificil {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: #F9FAFB;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .btn-table {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            background: white;
+            border: 2px solid #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-table:hover {
+            border-color: #4F46E5;
+            background: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .modal-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .skater-selector {
+                width: 100%;
+            }
+
+            .skater-select {
+                flex: 1;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>🛹 Seguiment de Trucs</h1>
-  <p>Registra els teus progressos sessió a sessió</p>
+    <div class="container">
+        <div class="header-section">
+            <div class="header-left">
+                <div class="title-area">
+                    <h1>🛹 Seguiment de Trucs</h1>
+                    <p class="subtitle">Registra els teus progressos sessió a sessió</p>
+                </div>
+                <div class="skater-selector">
+                    <select class="skater-select" id="skaterSelect" onchange="changeSkater()">
+                        <option value="default">Skater 1</option>
+                    </select>
+                    <button class="btn-add-skater" onclick="openAddSkaterModal()">+</button>
+                </div>
+            </div>
+            <div class="menu-button">
+                <button class="btn-secondary" onclick="toggleMenu()">
+                    <div class="burger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+                <div class="menu-dropdown" id="menuDropdown">
+                    <div class="menu-item" onclick="exportJSON()">💾 Exportar JSON</div>
+                    <div class="menu-item" onclick="exportCSV()">📊 Exportar CSV</div>
+                    <div class="menu-item" onclick="document.getElementById('importFile').click()">📥 Importar Dades</div>
+                </div>
+                <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importData(event)">
+            </div>
+        </div>
 
-<select id="skaterSelect"></select> <button id="addSkaterButton">+</button>
+        <div class="table-container">
+            <table id="tricksTable">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Truc</th>
+                        <th>Nivell</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="table-actions">
+                <button class="btn-table" onclick="openAddTrickModal()">➕ Afegir Truc</button>
+                <button class="btn-table" onclick="openAddSessionModal()">📅 Afegir Sessió</button>
+            </div>
+        </div>
 
-  <div>
-    <button id="addTrickButton">➕ Afegir Truc</button>
-    <button id="addSessionButton">📅 Afegir Sessió</button>
-  </div>
+        <div class="summary" id="summary"></div>
+    </div>
 
-  <div class="table-container">
-    <table id="tricksTable">
-      <thead>
-        <tr>
-          <th>Truc</th>
-          <th>Nivell</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
-</div>
+    <!-- Modal Afegir Truc -->
+    <div class="modal" id="addTrickModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Truc</h2>
+            <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+            <select id="trickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja" selected>Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addTrickModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addTrick()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-<!-- MODALS -->
+    <!-- Modal Afegir Sessió -->
+    <div class="modal" id="addSessionModal">
+        <div class="modal-content">
+            <h2>Afegir Nova Sessió</h2>
+            <input type="text" id="sessionNameInput" placeholder="Nom de la sessió (ex: Sessió 1)...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addSessionModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSession()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal" id="addTrickModal">
-  <div class="modal-content">
-    <h2>Afegir Nou Truc</h2>
-    <input type="text" id="trickNameInput" placeholder="Nom del truc...">
-    <select id="trickLevelSelect">
-      <option value="facil">Fàcil</option>
-      <option value="mitja" selected>Mitjà</option>
-      <option value="dificil">Difícil</option>
-    </select>
-    <button id="cancelAddTrick" class="btn-secondary">Cancel·lar</button>
-    <button id="confirmAddTrick" class="btn-primary">Afegir</button>
-  </div>
-</div>
+    <!-- Modal Afegir Skater -->
+    <div class="modal" id="addSkaterModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Skater</h2>
+            <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
+            <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal('addSkaterModal')">Cancel·lar</button>
+                <button class="btn-primary" onclick="addSkater()">Afegir</button>
+            </div>
+        </div>
+    </div>
 
-<div class="modal" id="addSkaterModal">
-  <div class="modal-content">
-    <h2>Afegir Nou Skater</h2>
-    <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
-    <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
-    <button id="cancelAddSkater" class="btn-secondary">Cancel·lar</button>
-    <button id="confirmAddSkater" class="btn-primary">Afegir</button>
-  </div>
-</div>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-<div class="modal" id="addSessionModal">
-  <div class="modal-content">
-    <h2>Afegir Nova Sessió</h2>
-    <input type="text" id="sessionNameInput" placeholder="Nom de la sessió...">
-    <button id="cancelAddSession" class="btn-secondary">Cancel·lar</button>
-    <button id="confirmAddSession" class="btn-primary">Afegir</button>
-  </div>
-</div>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+            authDomain: "skate-tricks-list.firebaseapp.com",
+            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skate-tricks-list",
+            storageBucket: "skate-tricks-list.firebasestorage.app",
+            messagingSenderId: "1038259811397",
+            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+        };
 
-<!-- FIREBASE SCRIPT -->
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+        // Dades per defecte
+        if (!window.allData) {
+            window.allData = {
+                currentSkater: 'default',
+                skaters: {
+                    'default': {
+                        name: 'Skater 1',
+                        age: null,
+                        sessions: ['Sessió 1', 'Sessió 2'],
+                        tricks: [
+                            { name: 'Ollie', level: 'facil', attempts: {} },
+                            { name: 'Kickflip', level: 'mitja', attempts: {} }
+                        ]
+                    }
+                }
+            };
+        }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-  authDomain: "skate-tricks-list.firebaseapp.com",
-  databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "skate-tricks-list",
-  storageBucket: "skate-tricks-list.appspot.com",
-  messagingSenderId: "1038259811397",
-  appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-};
+        let isLoadingFromFirebase = false;
+        let firebaseInitialized = false;
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-console.log("✅ Firebase inicialitzat correctament");
+        // Funció per guardar a Firebase
+        window.saveData = function() {
+            if (isLoadingFromFirebase || !firebaseInitialized) {
+                console.log('Esperant inicialització de Firebase...');
+                return;
+            }
+            
+            try {
+                const dataRef = ref(database, 'allSkaterData');
+                set(dataRef, window.allData)
+                    .then(() => {
+                        console.log('✅ Dades guardades a Firebase');
+                    })
+                    .catch((error) => {
+                        console.error('❌ Error guardant a Firebase:', error);
+                        // Backup local
+                        localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
+                    });
+            } catch (error) {
+                console.error('❌ Error en saveData:', error);
+                localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
+            }
+        }
 
-window.allData = {
-  currentSkater: 'default',
-  skaters: { 'default': { name: 'Skater 1', age: null, sessions: ['Sessió 1'], tricks: [] } }
-};
+        // Carregar dades de Firebase
+        function loadFromFirebase() {
+            isLoadingFromFirebase = true;
+            
+            try {
+                const dataRef = ref(database, 'allSkaterData');
+                onValue(dataRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        window.allData = snapshot.val();
+                        console.log('✅ Dades carregades de Firebase');
+                    } else {
+                        console.log('ℹ️ No hi ha dades a Firebase, usant dades per defecte');
+                        // Carregar de localStorage si existeix
+                        const localData = localStorage.getItem('allSkaterData');
+                        if (localData) {
+                            try {
+                                window.allData = JSON.parse(localData);
+                                console.log('✅ Dades carregades de localStorage');
+                            } catch (e) {
+                                console.log('ℹ️ Usant dades per defecte');
+                            }
+                        }
+                        // Guardar dades inicials a Firebase
+                        window.saveData();
+                    }
+                    
+                    firebaseInitialized = true;
+                    isLoadingFromFirebase = false;
+                    
+                    // Inicialitzar interfície
+                    if (window.initApp) {
+                        window.initApp();
+                    }
+                }, (error) => {
+                    console.error('❌ Error carregant de Firebase:', error);
+                    // Intentar carregar de localStorage
+                    const localData = localStorage.getItem('allSkaterData');
+                    if (localData) {
+                        try {
+                            window.allData = JSON.parse(localData);
+                            console.log('✅ Dades carregades de localStorage (fallback)');
+                        } catch (e) {
+                            console.log('ℹ️ Usant dades per defecte');
+                        }
+                    }
+                    
+                    firebaseInitialized = true;
+                    isLoadingFromFirebase = false;
+                    
+                    if (window.initApp) {
+                        window.initApp();
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Error inicialitzant Firebase:', error);
+                firebaseInitialized = false;
+                isLoadingFromFirebase = false;
+                
+                // Carregar dades locals com a fallback
+                const localData = localStorage.getItem('allSkaterData');
+                if (localData) {
+                    try {
+                        window.allData = JSON.parse(localData);
+                        console.log('✅ Dades carregades de localStorage (error Firebase)');
+                    } catch (e) {
+                        console.log('ℹ️ Usant dades per defecte');
+                    }
+                }
+                
+                if (window.initApp) {
+                    window.initApp();
+                }
+            }
+        }
 
-function saveData() {
-  const dataRef = ref(db, 'allSkaterData');
-  set(dataRef, window.allData)
-    .then(()=>console.log("💾 Dades guardades a Firebase"))
-    .catch(err=>console.error("❌ Error guardant a Firebase:", err));
-}
+        // Iniciar càrrega
+        loadFromFirebase();
+    </script>
+    <script>
+        // Funcions globals disponibles immediatament
+        
+        function getCurrentData() {
+            return window.allData.skaters[window.allData.currentSkater];
+        }
 
-const dataRef = ref(db, 'allSkaterData');
-onValue(dataRef, snapshot=>{
-  if(snapshot.exists()){ window.allData = snapshot.val(); console.log("📥 Dades carregades de Firebase"); }
-  else { console.log("⚠️ No hi ha dades a Firebase, creant estructura inicial..."); saveData(); }
-  updateSkaterList(); renderTable();
-});
+        function updateSkaterList() {
+            const select = document.getElementById('skaterSelect');
+            if (!select) return;
+            
+            select.innerHTML = '';
+            
+            for (let skaterId in window.allData.skaters) {
+                const skater = window.allData.skaters[skaterId];
+                const option = document.createElement('option');
+                option.value = skaterId;
+                option.textContent = skater.name + (skater.age ? ` (${skater.age} anys)` : '');
+                if (skaterId === window.allData.currentSkater) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
 
-function updateSkaterList(){
-  const select = document.getElementById('skaterSelect'); select.innerHTML='';
-  for(const id in window.allData.skaters){
-    const skater = window.allData.skaters[id];
-    const option = document.createElement('option'); option.value=id;
-    option.textContent = skater.name+(skater.age?` (${skater.age} anys)`:'');
-    if(id===window.allData.currentSkater) option.selected=true;
-    select.appendChild(option);
-  }
-}
+        window.changeSkater = function() {
+            window.allData.currentSkater = document.getElementById('skaterSelect').value;
+            renderTable();
+            renderSummary();
+            window.saveData();
+        }
 
-function renderTable(){
-  const tbody = document.getElementById('tableBody'); tbody.innerHTML='';
-  const data = window.allData.skaters[window.allData.currentSkater];
-  data.tricks.forEach((trick,index)=>{
-    const tr = document.createElement('tr');
-    const levelClass = `level-${trick.level||'mitja'}`;
-    tr.innerHTML = `<td>${trick.name}</td><td><span class="level-badge ${levelClass}">${trick.level}</span></td>`;
-    tbody.appendChild(tr);
-  });
-}
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            const data = getCurrentData();
 
-/* ---------- MODALS ---------- */
-function openModal(id){ document.getElementById(id).classList.add('active'); }
-function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+            if (!header || !body) return;
 
-document.getElementById('addTrickButton').addEventListener('click',()=>openModal('addTrickModal'));
-document.getElementById('addSkaterButton').addEventListener('click',()=>openModal('addSkaterModal'));
-document.getElementById('addSessionButton').addEventListener('click',()=>openModal('addSessionModal'));
+            header.innerHTML = '<th>Truc</th><th>Nivell</th>';
+            data.sessions.forEach((session, index) => {
+                header.innerHTML += `
+                    <th>
+                        ${session}
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteSession(${index})" title="Eliminar sessió">✕</button>
+                    </th>
+                `;
+            });
 
-document.getElementById('cancelAddTrick').addEventListener('click',()=>closeModal('addTrickModal'));
-document.getElementById('cancelAddSkater').addEventListener('click',()=>closeModal('addSkaterModal'));
-document.getElementById('cancelAddSession').addEventListener('click',()=>closeModal('addSessionModal'));
+            body.innerHTML = '';
+            data.tricks.forEach((trick, trickIndex) => {
+                const levelClass = `level-${trick.level || 'mitja'}`;
+                const levelText = {
+                    'facil': 'Fàcil',
+                    'mitja': 'Mitjà',
+                    'dificil': 'Difícil'
+                }[trick.level || 'mitja'];
 
-document.getElementById('confirmAddTrick').addEventListener('click',()=>{
-  const name = document.getElementById('trickNameInput').value.trim();
-  const level = document.getElementById('trickLevelSelect').value;
-  if(name){ window.allData.skaters[window.allData.currentSkater].tricks.push({name,level,attempts:{}}); closeModal('addTrickModal'); saveData(); renderTable(); }
-});
+                let row = `
+                    <tr>
+                        <td>
+                            <strong>${trick.name}</strong>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteTrick(${trickIndex})" title="Eliminar truc">✕</button>
+                        </td>
+                        <td>
+                            <span class="level-badge ${levelClass}">${levelText}</span>
+                        </td>
+                `;
 
-document.getElementById('confirmAddSkater').addEventListener('click',()=>{
-  const name = document.getElementById('skaterNameInput').value.trim();
-  const age = parseInt(document.getElementById('skaterAgeInput').value);
-  if(name){
-    const id = 'skater_'+Date.now();
-    window.allData.skaters[id] = {name, age: age||null, sessions:['Sessió 1'], tricks:[]};
-    window.allData.currentSkater = id;
-    closeModal('addSkaterModal'); saveData(); updateSkaterList(); renderTable();
-  }
-});
+                data.sessions.forEach((session) => {
+                    const attempt = trick.attempts[session] || '—';
+                    row += `
+                        <td>
+                            <select onchange="updateAttempt(${trickIndex}, '${session}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                                <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
+                            </select>
+                        </td>
+                    `;
+                });
 
-document.getElementById('confirmAddSession').addEventListener('click',()=>{
-  const name = document.getElementById('sessionNameInput').value.trim();
-  if(name){
-    const data = window.allData.skaters[window.allData.currentSkater];
-    data.sessions.push(name); closeModal('addSessionModal'); saveData();
-  }
-});
-</script>
+                row += '</tr>';
+                body.innerHTML += row;
+            });
+        }
 
-</body>
-</html>
+        function renderSummary() {
+            const summary = document.getElementById('summary');
+            const data = getCurrentData();
+            if (!summary) return;
+            
+            let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
+
+            data.sessions.forEach(session => {
+                html += `<div class="chart-week"><h3>${session}</h3>`;
+
+                data.tricks.forEach(trick => {
+                    const attempt = trick.attempts[session];
+                    
+                    let displayValue = 'No aconseguit';
+                    let percentage = 0;
+                    let barColor = '#9CA3AF';
+
+                    if (attempt && attempt !== '—') {
+                        if (attempt === '+5') {
+                            displayValue = '+5 intents';
+                            percentage = 10;
+                            barColor = '#DC2626';
+                        } else {
+                            const numAttempt = parseInt(attempt);
+                            displayValue = `Intent ${numAttempt}`;
+                            percentage = ((6 - numAttempt) / 5) * 100;
+                            
+                            if (numAttempt === 1) barColor = '#10B981';
+                            else if (numAttempt === 2) barColor = '#34D399';
+                            else if (numAttempt === 3) barColor = '#FBBF24';
+                            else if (numAttempt === 4) barColor = '#FB923C';
+                            else if (numAttempt === 5) barColor = '#F87171';
+                        }
+                    }
+
+                    html += `
+                        <div class="chart-bar">
+                            <div class="chart-label">${trick.name}</div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                    ${percentage > 15 ? displayValue : ''}
+                                </div>
+                            </div>
+                            <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            summary.innerHTML = html;
+        }
+
+        window.updateAttempt = function(trickIndex, session, value) {
+            const data = getCurrentData();
+            data.tricks[trickIndex].attempts[session] = value;
+            window.saveData();
+            renderSummary();
+        }
+
+        function openAddTrickModal() {
+            document.getElementById('addTrickModal').classList.add('active');
+            document.getElementById('trickNameInput').value = '';
+            document.getElementById('trickNameInput').focus();
+        }
+
+        function openAddSessionModal() {
+            document.getElementById('addSessionModal').classList.add('active');
+            document.getElementById('sessionNameInput').value = '';
+            document.getElementById('sessionNameInput').focus();
+        }
+
+        function openAddSkaterModal() {
+            document.getElementById('addSkaterModal').classList.add('active');
+            document.getElementById('skaterNameInput').value = '';
+            document.getElementById('skaterAgeInput').value = '';
+            document.getElementById('skaterNameInput').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addTrick() {
+            const name = document.getElementById('trickNameInput').value.trim();
+            const level = document.getElementById('trickLevelSelect').value;
+            if (name) {
+                const data = getCurrentData();
+                data.tricks.push({ name, level, attempts: {} });
+                window.saveData();
+                renderTable();
+                renderSummary();
+                closeModal('addTrickModal');
+            }
+        }
+
+        function addSession() {
+            const name = document.getElementById('sessionNameInput').value.trim();
+            if (name) {
+                const data = getCurrentData();
+                data.sessions.push(name);
+                window.saveData();
+                renderTable();
+                closeModal('addSessionModal');
+            }
+        }
+
+        function addSkater() {
+            const name = document.getElementById('skaterNameInput').value.trim();
+            const age = document.getElementById('skaterAgeInput').value;
+            if (name) {
+                const skaterId = 'skater_' + Date.now();
+                window.allData.skaters[skaterId] = {
+                    name: name,
+                    age: age ? parseInt(age) : null,
+                    sessions: ['Sessió 1'],
+                    tricks: []
+                };
+                window.allData.currentSkater = skaterId;
+                window.saveData();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                closeModal('addSkaterModal');
+            }
+        }
+
+        function deleteTrick(index) {
+            const data = getCurrentData();
+            if (confirm(`Segur que vols eliminar "${data.tricks[index].name}"?`)) {
+                data.tricks.splice(index, 1);
+                window.saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function deleteSession(index) {
+            const data = getCurrentData();
+            if (confirm(`Segur que vols eliminar "${data.sessions[index]}"?`)) {
+                const sessionName = data.sessions[index];
+                data.sessions.splice(index, 1);
+                data.tricks.forEach(trick => {
+                    delete trick.attempts[sessionName];
+                });
+                window.saveData();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('active');
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(window.allData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            toggleMenu();
+        }
