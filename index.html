@@ -606,116 +606,123 @@
         </div>
     </div>
 
- <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+<!-- Botons principals -->
+<button id="addTrickButton">➕ Afegir Truc</button>
+<button id="addSkaterButton">+</button>
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-        authDomain: "skate-tricks-list.firebaseapp.com",
-        databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "skate-tricks-list",
-        storageBucket: "skate-tricks-list.appspot.com",
-        messagingSenderId: "1038259811397",
-        appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-    };
+<!-- Modals -->
+<div class="modal" id="addTrickModal">
+  <div class="modal-content">
+    <h2>Afegir Nou Truc</h2>
+    <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+    <select id="trickLevelSelect">
+      <option value="facil">Fàcil</option>
+      <option value="mitja" selected>Mitjà</option>
+      <option value="dificil">Difícil</option>
+    </select>
+    <div class="modal-buttons">
+      <button id="cancelAddTrick">Cancel·lar</button>
+      <button id="confirmAddTrick">Afegir</button>
+    </div>
+  </div>
+</div>
 
-    // Inicialitza Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    console.log("✅ Firebase inicialitzat correctament");
+<div class="modal" id="addSkaterModal">
+  <div class="modal-content">
+    <h2>Afegir Nou Skater</h2>
+    <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
+    <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
+    <div class="modal-buttons">
+      <button id="cancelAddSkater">Cancel·lar</button>
+      <button id="confirmAddSkater">Afegir</button>
+    </div>
+  </div>
+</div>
 
-    // Dades locals per defecte
-    window.allData = {
-        currentSkater: 'default',
-        skaters: {
-            'default': {
-                name: 'Skater 1',
-                age: null,
-                sessions: ['Sessió 1', 'Sessió 2'],
-                tricks: [
-                    { name: 'Ollie', level: 'facil', attempts: {} },
-                    { name: 'Kickflip', level: 'mitja', attempts: {} }
-                ]
-            }
-        }
-    };
+<!-- Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-    // Exposem la bandera com a propietat de window per si vols llegir-la des d'altres scripts
-    window.isLoadingFromFirebase = false;
+  // Config Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+    authDomain: "skate-tricks-list.firebaseapp.com",
+    databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "skate-tricks-list",
+    storageBucket: "skate-tricks-list.appspot.com",
+    messagingSenderId: "1038259811397",
+    appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+  };
 
-    // Guardar dades
-    window.saveData = function() {
-        if (window.isLoadingFromFirebase) return;
-        const dataRef = ref(database, 'allSkaterData');
-        set(dataRef, window.allData)
-            .then(() => console.log("💾 Dades guardades correctament a Firebase"))
-            .catch((error) => {
-                console.error("❌ Error guardant a Firebase:", error);
-                localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
-            });
-    };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  console.log("✅ Firebase inicialitzat correctament");
 
-    // Carregar dades
-    function loadFromFirebase() {
-        window.isLoadingFromFirebase = true;
-        const dataRef = ref(database, 'allSkaterData');
-        onValue(dataRef, (snapshot) => {
-            if (snapshot.exists()) {
-                window.allData = snapshot.val();
-                console.log("📥 Dades carregades de Firebase");
-            } else {
-                console.log("⚠️ No hi ha dades a Firebase, creant estructura inicial...");
-                window.saveData();
-            }
-
-            // ------------- IMPORTANT: inicialitzar la UI -------------
-            // Si tens una funció initApp definida en un altre script, la cridem.
-            if (typeof window.initApp === 'function') {
-                try { window.initApp(); }
-                catch(e){ console.error("Error a window.initApp():", e); }
-            }
-
-            // Si no hi ha initApp, intentem cridar les funcions conegudes si existeixen.
-            // Això assegura que, tant si el callback arriba abans com després
-            // que s'executi l'script amb updateSkaterList/renderTable, la UI s'inicialitza.
-            if (typeof window.updateSkaterList === 'function') {
-                try { window.updateSkaterList(); }
-                catch(e){ console.error("Error updateSkaterList():", e); }
-            }
-            if (typeof window.renderTable === 'function') {
-                try { window.renderTable(); }
-                catch(e){ console.error("Error renderTable():", e); }
-            }
-            if (typeof window.renderSummary === 'function') {
-                try { window.renderSummary(); }
-                catch(e){ console.error("Error renderSummary():", e); }
-            }
-            // ---------------------------------------------------------
-
-            window.isLoadingFromFirebase = false;
-        }, (error) => {
-            console.error("❌ Error llegint de Firebase:", error);
-            // Si falla la lectura, fem fallback a localStorage
-            const localData = localStorage.getItem('allSkaterData');
-            if (localData) {
-                try {
-                    window.allData = JSON.parse(localData);
-                    console.log("📦 S'han carregat les dades des de localStorage");
-                } catch (e) {
-                    console.error("❌ Error parsejant localStorage:", e);
-                }
-            }
-            // Tractem d'inicialitzar la UI en fallback igualment
-            if (typeof window.updateSkaterList === 'function') window.updateSkaterList();
-            if (typeof window.renderTable === 'function') window.renderTable();
-            if (typeof window.renderSummary === 'function') window.renderSummary();
-            window.isLoadingFromFirebase = false;
-        });
+  window.allData = {
+    currentSkater: 'default',
+    skaters: {
+      'default': { name: 'Skater 1', age: null, sessions: ['Sessió 1'], tricks: [] }
     }
+  };
 
-    loadFromFirebase();
+  // Funcions per obrir/tancar modals
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  // Eventos botons amb addEventListener
+  document.getElementById('addTrickButton').addEventListener('click', () => openModal('addTrickModal'));
+  document.getElementById('addSkaterButton').addEventListener('click', () => openModal('addSkaterModal'));
+
+  document.getElementById('cancelAddTrick').addEventListener('click', () => closeModal('addTrickModal'));
+  document.getElementById('cancelAddSkater').addEventListener('click', () => closeModal('addSkaterModal'));
+
+  document.getElementById('confirmAddTrick').addEventListener('click', () => {
+    const name = document.getElementById('trickNameInput').value.trim();
+    const level = document.getElementById('trickLevelSelect').value;
+    if(name){
+      window.allData.skaters[window.allData.currentSkater].tricks.push({name, level, attempts:{}});
+      closeModal('addTrickModal');
+      console.log("Truc afegit:", name, level);
+      saveData();
+    }
+  });
+
+  document.getElementById('confirmAddSkater').addEventListener('click', () => {
+    const name = document.getElementById('skaterNameInput').value.trim();
+    const age = parseInt(document.getElementById('skaterAgeInput').value);
+    if(name){
+      const id = 'skater_'+Date.now();
+      window.allData.skaters[id] = {name, age: age||null, sessions: ['Sessió 1'], tricks: []};
+      window.allData.currentSkater = id;
+      closeModal('addSkaterModal');
+      console.log("Skater afegit:", name, age);
+      saveData();
+    }
+  });
+
+  // Guardar dades a Firebase
+  function saveData(){
+    const dataRef = ref(db, 'allSkaterData');
+    set(dataRef, window.allData)
+      .then(()=>console.log("💾 Dades guardades a Firebase"))
+      .catch(err=>console.error("❌ Error guardant a Firebase:", err));
+  }
+
+  // Carregar dades inicials
+  const dataRef = ref(db, 'allSkaterData');
+  onValue(dataRef, snapshot => {
+    if(snapshot.exists()){
+      window.allData = snapshot.val();
+      console.log("📥 Dades carregades de Firebase");
+    } else {
+      console.log("⚠️ No hi ha dades a Firebase, creant estructura inicial...");
+      saveData();
+    }
+  });
+
 </script>
+
 
 
     <script>
