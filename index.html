@@ -606,7 +606,7 @@
         </div>
     </div>
 
-    <script type="module">
+ <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
@@ -620,12 +620,12 @@
         appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
     };
 
-    // --- Inicialització ---
+    // Inicialitza Firebase
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
     console.log("✅ Firebase inicialitzat correctament");
 
-    // --- Dades locals per defecte ---
+    // Dades locals per defecte
     window.allData = {
         currentSkater: 'default',
         skaters: {
@@ -641,11 +641,12 @@
         }
     };
 
-    let isLoadingFromFirebase = false;
+    // Exposem la bandera com a propietat de window per si vols llegir-la des d'altres scripts
+    window.isLoadingFromFirebase = false;
 
-    // --- Guardar dades ---
+    // Guardar dades
     window.saveData = function() {
-        if (isLoadingFromFirebase) return;
+        if (window.isLoadingFromFirebase) return;
         const dataRef = ref(database, 'allSkaterData');
         set(dataRef, window.allData)
             .then(() => console.log("💾 Dades guardades correctament a Firebase"))
@@ -655,9 +656,9 @@
             });
     };
 
-    // --- Carregar dades ---
+    // Carregar dades
     function loadFromFirebase() {
-        isLoadingFromFirebase = true;
+        window.isLoadingFromFirebase = true;
         const dataRef = ref(database, 'allSkaterData');
         onValue(dataRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -668,23 +669,54 @@
                 window.saveData();
             }
 
-            if (window.initApp) window.initApp();
-            isLoadingFromFirebase = false;
+            // ------------- IMPORTANT: inicialitzar la UI -------------
+            // Si tens una funció initApp definida en un altre script, la cridem.
+            if (typeof window.initApp === 'function') {
+                try { window.initApp(); }
+                catch(e){ console.error("Error a window.initApp():", e); }
+            }
+
+            // Si no hi ha initApp, intentem cridar les funcions conegudes si existeixen.
+            // Això assegura que, tant si el callback arriba abans com després
+            // que s'executi l'script amb updateSkaterList/renderTable, la UI s'inicialitza.
+            if (typeof window.updateSkaterList === 'function') {
+                try { window.updateSkaterList(); }
+                catch(e){ console.error("Error updateSkaterList():", e); }
+            }
+            if (typeof window.renderTable === 'function') {
+                try { window.renderTable(); }
+                catch(e){ console.error("Error renderTable():", e); }
+            }
+            if (typeof window.renderSummary === 'function') {
+                try { window.renderSummary(); }
+                catch(e){ console.error("Error renderSummary():", e); }
+            }
+            // ---------------------------------------------------------
+
+            window.isLoadingFromFirebase = false;
         }, (error) => {
             console.error("❌ Error llegint de Firebase:", error);
-            // Mode offline: carregar dades locals
+            // Si falla la lectura, fem fallback a localStorage
             const localData = localStorage.getItem('allSkaterData');
             if (localData) {
-                window.allData = JSON.parse(localData);
-                console.log("📦 S'han carregat les dades des de localStorage");
+                try {
+                    window.allData = JSON.parse(localData);
+                    console.log("📦 S'han carregat les dades des de localStorage");
+                } catch (e) {
+                    console.error("❌ Error parsejant localStorage:", e);
+                }
             }
-            if (window.initApp) window.initApp();
-            isLoadingFromFirebase = false;
+            // Tractem d'inicialitzar la UI en fallback igualment
+            if (typeof window.updateSkaterList === 'function') window.updateSkaterList();
+            if (typeof window.renderTable === 'function') window.renderTable();
+            if (typeof window.renderSummary === 'function') window.renderSummary();
+            window.isLoadingFromFirebase = false;
         });
     }
 
     loadFromFirebase();
 </script>
+
 
     <script>
         // Funcions globals disponibles immediatament
