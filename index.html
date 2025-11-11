@@ -48,20 +48,23 @@
         .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 30px;
         }
 
         .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            flex: 1;
+        }
+
+        .title-area {
+            margin-bottom: 15px;
         }
 
         .skater-selector {
             display: flex;
             align-items: center;
             gap: 10px;
+            max-width: 300px;
         }
 
         .skater-select {
@@ -513,7 +516,7 @@
     <div class="container">
         <div class="header-section">
             <div class="header-left">
-                <div>
+                <div class="title-area">
                     <h1>🛹 Seguiment de Trucs</h1>
                     <p class="subtitle">Registra els teus progressos sessió a sessió</p>
                 </div>
@@ -533,9 +536,9 @@
                     </div>
                 </button>
                 <div class="menu-dropdown" id="menuDropdown">
-                    <div class="menu-item" onclick="exportJSON(); toggleMenu()">💾 Exportar JSON</div>
-                    <div class="menu-item" onclick="exportCSV(); toggleMenu()">📊 Exportar CSV</div>
-                    <div class="menu-item" onclick="document.getElementById('importFile').click(); toggleMenu()">📥 Importar Dades</div>
+                    <div class="menu-item" onclick="exportJSON()">💾 Exportar JSON</div>
+                    <div class="menu-item" onclick="exportCSV()">📊 Exportar CSV</div>
+                    <div class="menu-item" onclick="document.getElementById('importFile').click()">📥 Importar Dades</div>
                 </div>
                 <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importData(event)">
             </div>
@@ -930,4 +933,5 @@
             a.href = url;
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            toggleMenu();
         }
