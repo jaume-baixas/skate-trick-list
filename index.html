@@ -663,11 +663,12 @@
                 } else {
                     window.saveData();
                 }
-                if (typeof window.updateSkaterList === 'function') {
-                    window.updateSkaterList();
-                    window.renderTable();
-                    window.renderSummary();
+                
+                // Cridar funcions globals després de carregar
+                if (window.initApp) {
+                    window.initApp();
                 }
+                
                 isLoadingFromFirebase = false;
             });
         }
@@ -675,12 +676,16 @@
         loadFromFirebase();
     </script>
     <script>
+        // Funcions globals disponibles immediatament
+        
         function getCurrentData() {
             return window.allData.skaters[window.allData.currentSkater];
         }
 
         function updateSkaterList() {
             const select = document.getElementById('skaterSelect');
+            if (!select) return;
+            
             select.innerHTML = '';
             
             for (let skaterId in window.allData.skaters) {
@@ -695,9 +700,7 @@
             }
         }
 
-        window.updateSkaterList = updateSkaterList;
-
-        function changeSkater() {
+        window.changeSkater = function() {
             window.allData.currentSkater = document.getElementById('skaterSelect').value;
             renderTable();
             renderSummary();
@@ -763,8 +766,6 @@
             });
         }
 
-        window.renderTable = renderTable;
-
         function renderSummary() {
             const summary = document.getElementById('summary');
             const data = getCurrentData();
@@ -820,9 +821,7 @@
             summary.innerHTML = html;
         }
 
-        window.renderSummary = renderSummary;
-
-        function updateAttempt(trickIndex, session, value) {
+        window.updateAttempt = function(trickIndex, session, value) {
             const data = getCurrentData();
             data.tricks[trickIndex].attempts[session] = value;
             window.saveData();
