@@ -607,74 +607,85 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-            authDomain: "skate-tricks-list.firebaseapp.com",
-            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "skate-tricks-list",
-            storageBucket: "skate-tricks-list.firebasestorage.app",
-            messagingSenderId: "1038259811397",
-            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+        authDomain: "skate-tricks-list.firebaseapp.com",
+        databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "skate-tricks-list",
+        storageBucket: "skate-tricks-list.appspot.com",
+        messagingSenderId: "1038259811397",
+        appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+    // --- Inicialització ---
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    console.log("✅ Firebase inicialitzat correctament");
 
-        window.allData = {
-            currentSkater: 'default',
-            skaters: {
-                'default': {
-                    name: 'Skater 1',
-                    age: null,
-                    sessions: ['Sessió 1', 'Sessió 2'],
-                    tricks: [
-                        { name: 'Ollie', level: 'facil', attempts: {} },
-                        { name: 'Kickflip', level: 'mitja', attempts: {} }
-                    ]
-                }
+    // --- Dades locals per defecte ---
+    window.allData = {
+        currentSkater: 'default',
+        skaters: {
+            'default': {
+                name: 'Skater 1',
+                age: null,
+                sessions: ['Sessió 1', 'Sessió 2'],
+                tricks: [
+                    { name: 'Ollie', level: 'facil', attempts: {} },
+                    { name: 'Kickflip', level: 'mitja', attempts: {} }
+                ]
             }
-        };
-
-        let isLoadingFromFirebase = false;
-
-        window.saveData = function() {
-            if (isLoadingFromFirebase) return;
-            
-            const dataRef = ref(database, 'allSkaterData');
-            set(dataRef, window.allData)
-                .then(() => {
-                    console.log('Dades guardades a Firebase');
-                })
-                .catch((error) => {
-                    console.error('Error guardant a Firebase:', error);
-                    localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
-                });
         }
+    };
 
-        function loadFromFirebase() {
-            isLoadingFromFirebase = true;
-            const dataRef = ref(database, 'allSkaterData');
-            onValue(dataRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    window.allData = snapshot.val();
-                } else {
-                    window.saveData();
-                }
-                
-                // Cridar funcions globals després de carregar
-                if (window.initApp) {
-                    window.initApp();
-                }
-                
-                isLoadingFromFirebase = false;
+    let isLoadingFromFirebase = false;
+
+    // --- Guardar dades ---
+    window.saveData = function() {
+        if (isLoadingFromFirebase) return;
+        const dataRef = ref(database, 'allSkaterData');
+        set(dataRef, window.allData)
+            .then(() => console.log("💾 Dades guardades correctament a Firebase"))
+            .catch((error) => {
+                console.error("❌ Error guardant a Firebase:", error);
+                localStorage.setItem('allSkaterData', JSON.stringify(window.allData));
             });
-        }
+    };
 
-        loadFromFirebase();
-    </script>
+    // --- Carregar dades ---
+    function loadFromFirebase() {
+        isLoadingFromFirebase = true;
+        const dataRef = ref(database, 'allSkaterData');
+        onValue(dataRef, (snapshot) => {
+            if (snapshot.exists()) {
+                window.allData = snapshot.val();
+                console.log("📥 Dades carregades de Firebase");
+            } else {
+                console.log("⚠️ No hi ha dades a Firebase, creant estructura inicial...");
+                window.saveData();
+            }
+
+            if (window.initApp) window.initApp();
+            isLoadingFromFirebase = false;
+        }, (error) => {
+            console.error("❌ Error llegint de Firebase:", error);
+            // Mode offline: carregar dades locals
+            const localData = localStorage.getItem('allSkaterData');
+            if (localData) {
+                window.allData = JSON.parse(localData);
+                console.log("📦 S'han carregat les dades des de localStorage");
+            }
+            if (window.initApp) window.initApp();
+            isLoadingFromFirebase = false;
+        });
+    }
+
+    loadFromFirebase();
+</script>
+
     <script>
         // Funcions globals disponibles immediatament
         
