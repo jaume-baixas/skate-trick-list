@@ -607,20 +607,21 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
-            authDomain: "skate-tricks-list.firebaseapp.com",
-            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "skate-tricks-list",
-            storageBucket: "skate-tricks-list.firebasestorage.app",
-            messagingSenderId: "1038259811397",
-            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
-        };
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+    authDomain: "skate-tricks-list.firebaseapp.com",
+    databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "skate-tricks-list",
+    storageBucket: "skate-tricks-list.firebasestorage.app",
+    messagingSenderId: "1038259811397",
+    appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+  };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
