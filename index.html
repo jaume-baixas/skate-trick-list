@@ -521,14 +521,14 @@
                     <p class="subtitle">Registra els teus progressos sessió a sessió</p>
                 </div>
                 <div class="skater-selector">
-                    <select class="skater-select" id="skaterSelect" onchange="changeSkater()">
+                    <select class="skater-select" id="skaterSelect">
                         <option value="default">Skater 1</option>
                     </select>
-                    <button class="btn-add-skater" onclick="openAddSkaterModal()">+</button>
+                    <button class="btn-add-skater" id="btnAddSkater">+</button>
                 </div>
             </div>
             <div class="menu-button">
-                <button class="btn-secondary" onclick="toggleMenu()">
+                <button class="btn-secondary" id="btnMenu">
                     <div class="burger-icon">
                         <span></span>
                         <span></span>
@@ -536,11 +536,11 @@
                     </div>
                 </button>
                 <div class="menu-dropdown" id="menuDropdown">
-                    <div class="menu-item" onclick="exportJSON()">💾 Exportar JSON</div>
-                    <div class="menu-item" onclick="exportCSV()">📊 Exportar CSV</div>
-                    <div class="menu-item" onclick="document.getElementById('importFile').click()">📥 Importar Dades</div>
+                    <div class="menu-item" id="btnExportJSON">💾 Exportar JSON</div>
+                    <div class="menu-item" id="btnExportCSV">📊 Exportar CSV</div>
+                    <div class="menu-item" id="btnImport">📥 Importar Dades</div>
                 </div>
-                <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importData(event)">
+                <input type="file" id="importFile" style="display:none" accept=".json,.csv">
             </div>
         </div>
 
