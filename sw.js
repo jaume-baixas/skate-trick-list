@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trucs-v5'; // Canvia aquest número cada vegada que actualitzis
+const CACHE_NAME = 'trucs-v6'; // Canvia aquest número cada vegada que actualitzis
 const urlsToCache = [
   '.',
   'index.html',
