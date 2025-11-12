@@ -64,7 +64,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            max-width: 300px;
+            max-width: 400px;
         }
 
         .skater-select {
@@ -98,6 +98,21 @@
 
         .btn-add-skater:hover {
             background: #4338CA;
+        }
+
+        .btn-delete-skater {
+            padding: 8px 12px;
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-delete-skater:hover {
+            background: #DC2626;
         }
 
         .menu-button {
@@ -527,6 +542,7 @@
                         <option value="default">Skater 1</option>
                     </select>
                     <button class="btn-add-skater" id="btnAddSkater">+</button>
+                    <button class="btn-delete-skater" id="btnDeleteSkater">🗑️</button>
                 </div>
             </div>
             <div class="menu-button">
@@ -886,6 +902,36 @@
             document.getElementById('skaterNameInput').value = '';
             document.getElementById('skaterAgeInput').value = '';
             document.getElementById('skaterNameInput').focus();
+        });
+
+        document.getElementById('btnDeleteSkater').addEventListener('click', () => {
+            const skaterCount = Object.keys(window.allData.skaters).length;
+            
+            if (skaterCount <= 1) {
+                alert('No pots eliminar l\'únic skater!');
+                return;
+            }
+
+            const currentSkater = window.allData.skaters[window.allData.currentSkater];
+            const skaterName = currentSkater.name + (currentSkater.age ? ` (${currentSkater.age} anys)` : '');
+            
+            if (confirm(`Segur que vols eliminar "${skaterName}"?\n\nAquesta acció no es pot desfer.`)) {
+                const currentId = window.allData.currentSkater;
+                
+                // Eliminar skater
+                delete window.allData.skaters[currentId];
+                
+                // Seleccionar el primer skater disponible
+                const firstSkater = Object.keys(window.allData.skaters)[0];
+                window.allData.currentSkater = firstSkater;
+                
+                window.saveToFirebase();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                
+                console.log('🗑️ Skater eliminat');
+            }
         });
 
         document.getElementById('btnMenu').addEventListener('click', () => {
