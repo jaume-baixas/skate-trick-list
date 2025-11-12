@@ -103,18 +103,25 @@
         }
 
         .btn-delete-skater {
-            padding: 8px 12px;
-            background: #EF4444;
-            color: white;
+            padding: 6px 10px;
+            background: transparent;
+            color: #9CA3AF;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.2s;
         }
 
         .btn-delete-skater:hover {
-            background: #DC2626;
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
         }
 
         .menu-button {
@@ -237,7 +244,7 @@
         }
 
         th:nth-child(2) {
-            left: 150px;
+            left: 120px;
         }
 
         td:first-child,
@@ -249,12 +256,12 @@
 
         td:first-child {
             left: 0;
-            min-width: 150px;
-            max-width: 150px;
+            min-width: 120px;
+            max-width: 120px;
         }
 
         td:nth-child(2) {
-            left: 150px;
+            left: 120px;
         }
 
         tr:hover td:first-child,
@@ -468,6 +475,7 @@
             padding: 15px;
             background: #F9FAFB;
             border-radius: 0 0 10px 10px;
+            border-top: 1px solid #E5E7EB;
         }
 
         .btn-table {
@@ -564,6 +572,11 @@
             </div>
         </div>
 
+        <div class="actions-bar">
+            <button class="btn-table" id="btnAddTrick">➕ Afegir Truc</button>
+            <button class="btn-table" id="btnAddSession">📅 Afegir Sessió</button>
+        </div>
+
         <div class="table-container">
             <table id="tricksTable">
                 <thead>
@@ -575,10 +588,6 @@
                 <tbody id="tableBody">
                 </tbody>
             </table>
-            <div class="table-actions">
-                <button class="btn-table" id="btnAddTrick">➕ Afegir Truc</button>
-                <button class="btn-table" id="btnAddSession">📅 Afegir Sessió</button>
-            </div>
         </div>
 
         <div class="summary" id="summary"></div>
@@ -628,7 +637,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
@@ -659,26 +668,30 @@
             }
         };
 
-        let isLoadingFromFirebase = false;
         let firebaseReady = false;
+        let lastSaveTime = 0;
 
         // Guardar a Firebase
         window.saveToFirebase = function() {
-            if (isLoadingFromFirebase) {
-                console.log('⏳ Esperant... (està carregant)');
-                return;
-            }
-            
             if (!firebaseReady) {
-                console.log('⏳ Esperant... (Firebase no està llest)');
-                setTimeout(() => window.saveToFirebase(), 500);
+                console.log('⏳ Firebase no està llest...');
                 return;
             }
             
-            console.log('💾 Guardant a Firebase...');
+            // Evitar guardar massa ràpid
+            const now = Date.now();
+            if (now - lastSaveTime < 500) {
+                console.log('⏳ Esperant per no saturar Firebase...');
+                setTimeout(() => window.saveToFirebase(), 600);
+                return;
+            }
+            
+            lastSaveTime = now;
+            console.log('💾 Guardant a Firebase...', window.allData);
+            
             set(dataRef, window.allData)
                 .then(() => {
-                    console.log('✅ Guardat correctament!');
+                    console.log('✅ Dades guardades correctament!');
                     localStorage.setItem('tricksBackup', JSON.stringify(window.allData));
                 })
                 .catch((err) => {
@@ -687,57 +700,44 @@
                 });
         }
 
-        // Carregar de Firebase
-        console.log('🔄 Connectant a Firebase...');
-        onValue(dataRef, (snapshot) => {
-            console.log('📡 Dades rebudes de Firebase');
-            isLoadingFromFirebase = true;
-            
+        // Carregar NOMÉS una vegada al iniciar
+        console.log('🔄 Carregant dades inicials de Firebase...');
+        get(dataRef).then((snapshot) => {
             if (snapshot.exists()) {
                 window.allData = snapshot.val();
                 console.log('✅ Dades carregades:', window.allData);
             } else {
-                console.log('ℹ️ No hi ha dades. Usant dades per defecte');
-                // Intentar carregar backup local
+                console.log('ℹ️ No hi ha dades. Usant per defecte');
                 const backup = localStorage.getItem('tricksBackup');
                 if (backup) {
                     try {
                         window.allData = JSON.parse(backup);
-                        console.log('✅ Dades carregades del backup local');
+                        console.log('✅ Carregat del backup local');
                     } catch (e) {
                         console.log('ℹ️ Usant dades per defecte');
                     }
                 }
+                // Guardar dades inicials
+                set(dataRef, window.allData).then(() => {
+                    console.log('✅ Dades inicials guardades');
+                });
             }
+            
+            firebaseReady = true;
             
             if (window.refreshUI) {
                 window.refreshUI();
             }
-            
-            firebaseReady = true;
-            isLoadingFromFirebase = false;
-            
-            // Guardar dades inicials si no existeixen
-            if (!snapshot.exists()) {
-                console.log('💾 Guardant dades inicials...');
-                setTimeout(() => window.saveToFirebase(), 1000);
-            }
-        }, (error) => {
-            console.error('❌ Error de Firebase:', error);
-            isLoadingFromFirebase = false;
-            firebaseReady = true;
-            
-            // Carregar backup local
+        }).catch((error) => {
+            console.error('❌ Error carregant:', error);
             const backup = localStorage.getItem('tricksBackup');
             if (backup) {
                 try {
                     window.allData = JSON.parse(backup);
                     console.log('✅ Usant backup local');
-                } catch (e) {
-                    console.log('ℹ️ Usant dades per defecte');
-                }
+                } catch (e) {}
             }
-            
+            firebaseReady = true;
             if (window.refreshUI) {
                 window.refreshUI();
             }
@@ -809,6 +809,12 @@
 
         function renderSummary() {
             const data = getCurrentData();
+            
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes per resum, esperant...');
+                return;
+            }
+            
             let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
 
             data.sessions.forEach(session => {
