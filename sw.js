@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trucs-v13';
+const CACHE_NAME = 'trucs-v4'; // Canvia aquest número cada vegada que actualitzis
 const urlsToCache = [
   '.',
   'index.html',
@@ -10,13 +10,21 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // Força instal·lació immediata
 });
 
 self.addEventListener('fetch', event => {
+  // Network first, cache fallback
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request)
+      .then(response => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 
@@ -26,10 +34,12 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
+            console.log('🗑️ Eliminant cache antiga:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  self.clients.claim();
 });
