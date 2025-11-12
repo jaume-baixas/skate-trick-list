@@ -641,30 +641,88 @@
             }
         };
 
-        let isLoading = false;
+        let isLoadingFromFirebase = false;
+        let firebaseReady = false;
 
         // Guardar a Firebase
         window.saveToFirebase = function() {
-            if (isLoading) return;
+            if (isLoadingFromFirebase) {
+                console.log('⏳ Esperant... (està carregant)');
+                return;
+            }
             
+            if (!firebaseReady) {
+                console.log('⏳ Esperant... (Firebase no està llest)');
+                setTimeout(() => window.saveToFirebase(), 500);
+                return;
+            }
+            
+            console.log('💾 Guardant a Firebase...');
             set(dataRef, window.allData)
-                .then(() => console.log('✅ Guardat'))
-                .catch((err) => console.error('❌ Error:', err));
+                .then(() => {
+                    console.log('✅ Guardat correctament!');
+                    localStorage.setItem('tricksBackup', JSON.stringify(window.allData));
+                })
+                .catch((err) => {
+                    console.error('❌ Error guardant:', err);
+                    localStorage.setItem('tricksBackup', JSON.stringify(window.allData));
+                });
         }
 
         // Carregar de Firebase
+        console.log('🔄 Connectant a Firebase...');
         onValue(dataRef, (snapshot) => {
-            isLoading = true;
+            console.log('📡 Dades rebudes de Firebase');
+            isLoadingFromFirebase = true;
+            
             if (snapshot.exists()) {
                 window.allData = snapshot.val();
-                console.log('✅ Carregat de Firebase');
+                console.log('✅ Dades carregades:', window.allData);
             } else {
-                console.log('ℹ️ Dades per defecte');
-                window.saveToFirebase();
+                console.log('ℹ️ No hi ha dades. Usant dades per defecte');
+                // Intentar carregar backup local
+                const backup = localStorage.getItem('tricksBackup');
+                if (backup) {
+                    try {
+                        window.allData = JSON.parse(backup);
+                        console.log('✅ Dades carregades del backup local');
+                    } catch (e) {
+                        console.log('ℹ️ Usant dades per defecte');
+                    }
+                }
             }
             
-            if (window.refreshUI) window.refreshUI();
-            isLoading = false;
+            if (window.refreshUI) {
+                window.refreshUI();
+            }
+            
+            firebaseReady = true;
+            isLoadingFromFirebase = false;
+            
+            // Guardar dades inicials si no existeixen
+            if (!snapshot.exists()) {
+                console.log('💾 Guardant dades inicials...');
+                setTimeout(() => window.saveToFirebase(), 1000);
+            }
+        }, (error) => {
+            console.error('❌ Error de Firebase:', error);
+            isLoadingFromFirebase = false;
+            firebaseReady = true;
+            
+            // Carregar backup local
+            const backup = localStorage.getItem('tricksBackup');
+            if (backup) {
+                try {
+                    window.allData = JSON.parse(backup);
+                    console.log('✅ Usant backup local');
+                } catch (e) {
+                    console.log('ℹ️ Usant dades per defecte');
+                }
+            }
+            
+            if (window.refreshUI) {
+                window.refreshUI();
+            }
         });
     </script>
     <script>
