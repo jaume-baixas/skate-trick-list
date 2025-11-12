@@ -244,7 +244,9 @@
         }
 
         th:nth-child(2) {
-            left: 120px;
+            left: 80px;
+            min-width: 80px;
+            max-width: 80px;
         }
 
         td:first-child,
@@ -314,10 +316,16 @@
 
         .chart-container {
             margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
         .chart-week {
-            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
         }
 
         .chart-week h3 {
@@ -336,10 +344,13 @@
         }
 
         .chart-label {
-            width: 200px;
+            width: 80px;
             font-weight: 600;
             color: #374151;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .chart-bar-container {
@@ -366,11 +377,24 @@
         }
 
         .chart-value {
-            min-width: 40px;
+            min-width: 70px;
             text-align: right;
             font-weight: 600;
             color: #6B7280;
-            font-size: 0.9em;
+            font-size: 0.85em;
+        }
+
+        .summary-overall {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .summary-overall h3 {
+            margin-bottom: 20px;
+            font-size: 1.3em;
         }
 
         .modal {
@@ -444,6 +468,62 @@
         .delete-btn:hover {
             background: #FEE2E2;
             color: #DC2626;
+        }
+
+        .edit-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .edit-btn:hover {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .download-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .download-button:hover {
+            background: #4338CA;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.5);
         }
 
         .level-badge {
@@ -557,21 +637,6 @@
                     <button class="btn-delete-skater" id="btnDeleteSkater">✕</button>
                 </div>
             </div>
-            <div class="menu-button">
-                <button class="btn-secondary" id="btnMenu">
-                    <div class="burger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </button>
-                <div class="menu-dropdown" id="menuDropdown">
-                    <div class="menu-item" id="btnExportJSON">💾 Exportar JSON</div>
-                    <div class="menu-item" id="btnExportCSV">📊 Exportar CSV</div>
-                    <div class="menu-item" id="btnImport">📥 Importar Dades</div>
-                </div>
-                <input type="file" id="importFile" style="display:none" accept=".json,.csv">
-            </div>
         </div>
 
         <div class="actions-bar">
@@ -593,6 +658,46 @@
         </div>
 
         <div class="summary" id="summary"></div>
+
+        <!-- Botó flotant descarregar -->
+        <button class="download-button" id="btnDownload">⬇</button>
+        <div class="menu-dropdown" id="downloadMenu" style="position: fixed; bottom: 100px; right: 30px;">
+            <div class="menu-item" id="btnExportJSON">💾 Exportar JSON</div>
+            <div class="menu-item" id="btnExportCSV">📊 Exportar CSV</div>
+            <div class="menu-item" id="btnImport">📥 Importar Dades</div>
+        </div>
+        <input type="file" id="importFile" style="display:none" accept=".json,.csv">
+    </div>
+
+    <!-- Modal Editar Truc -->
+    <div class="modal" id="editTrickModal">
+        <div class="modal-content">
+            <h2>Editar Truc</h2>
+            <input type="text" id="editTrickNameInput" placeholder="Nom del truc...">
+            <select id="editTrickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja">Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-danger" id="btnDeleteTrickFromModal">Eliminar</button>
+                <button class="btn-secondary" id="btnCancelEditTrick">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmEditTrick">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Sessió -->
+    <div class="modal" id="editSessionModal">
+        <div class="modal-content">
+            <h2>Editar Sessió</h2>
+            <input type="text" id="editSessionNameInput" placeholder="Nom de la sessió...">
+            <div class="modal-buttons">
+                <button class="btn-danger" id="btnDeleteSessionFromModal">Eliminar</button>
+                <button class="btn-secondary" id="btnCancelEditSession">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmEditSession">Guardar</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Afegir Truc -->
@@ -779,7 +884,7 @@
 
             header.innerHTML = '<th>Truc</th><th>Nivell</th>';
             data.sessions.forEach((session, i) => {
-                header.innerHTML += `<th>${session} <button class="delete-btn" onclick="deleteSession(${i})">✕</button></th>`;
+                header.innerHTML += `<th>${session} <button class="edit-btn" onclick="openEditSessionModal(${i})">✎</button></th>`;
             });
 
             body.innerHTML = '';
@@ -788,7 +893,7 @@
                 const levelText = {'facil': 'Fàcil', 'mitja': 'Mitjà', 'dificil': 'Difícil'}[trick.level || 'mitja'];
 
                 let row = `<tr>
-                    <td><strong>${trick.name}</strong><button class="delete-btn" onclick="deleteTrick(${ti})">✕</button></td>
+                    <td><strong>${trick.name}</strong><button class="edit-btn" onclick="openEditTrickModal(${ti})">✎</button></td>
                     <td><span class="level-badge ${levelClass}">${levelText}</span></td>`;
 
                 data.sessions.forEach((session) => {
@@ -876,6 +981,24 @@
             renderSummary();
         }
 
+        let currentEditTrickIndex = null;
+        let currentEditSessionIndex = null;
+
+        window.openEditTrickModal = function(index) {
+            currentEditTrickIndex = index;
+            const trick = getCurrentData().tricks[index];
+            document.getElementById('editTrickNameInput').value = trick.name;
+            document.getElementById('editTrickLevelSelect').value = trick.level;
+            document.getElementById('editTrickModal').classList.add('active');
+        }
+
+        window.openEditSessionModal = function(index) {
+            currentEditSessionIndex = index;
+            const session = getCurrentData().sessions[index];
+            document.getElementById('editSessionNameInput').value = session;
+            document.getElementById('editSessionModal').classList.add('active');
+        }
+
         window.deleteTrick = function(i) {
             if (confirm(`Eliminar "${getCurrentData().tricks[i].name}"?`)) {
                 getCurrentData().tricks.splice(i, 1);
@@ -949,8 +1072,8 @@
             }
         });
 
-        document.getElementById('btnMenu').addEventListener('click', () => {
-            document.getElementById('menuDropdown').classList.toggle('active');
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            document.getElementById('downloadMenu').classList.toggle('active');
         });
 
         document.getElementById('btnExportJSON').addEventListener('click', () => {
@@ -959,7 +1082,7 @@
             a.href = URL.createObjectURL(blob);
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            document.getElementById('menuDropdown').classList.remove('active');
+            document.getElementById('downloadMenu').classList.remove('active');
         });
 
         document.getElementById('btnExportCSV').addEventListener('click', () => {
@@ -976,7 +1099,7 @@
             a.href = URL.createObjectURL(blob);
             a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
-            document.getElementById('menuDropdown').classList.remove('active');
+            document.getElementById('downloadMenu').classList.remove('active');
         });
 
         document.getElementById('btnImport').addEventListener('click', () => {
@@ -1002,7 +1125,7 @@
             };
             reader.readAsText(file);
             e.target.value = '';
-            document.getElementById('menuDropdown').classList.remove('active');
+            document.getElementById('downloadMenu').classList.remove('active');
         });
 
         document.getElementById('btnAddTrick').addEventListener('click', () => {
@@ -1020,6 +1143,8 @@
         document.getElementById('btnCancelTrick').addEventListener('click', () => closeModal('addTrickModal'));
         document.getElementById('btnCancelSession').addEventListener('click', () => closeModal('addSessionModal'));
         document.getElementById('btnCancelSkater').addEventListener('click', () => closeModal('addSkaterModal'));
+        document.getElementById('btnCancelEditTrick').addEventListener('click', () => closeModal('editTrickModal'));
+        document.getElementById('btnCancelEditSession').addEventListener('click', () => closeModal('editSessionModal'));
 
         document.getElementById('btnConfirmTrick').addEventListener('click', () => {
             const name = document.getElementById('trickNameInput').value.trim();
@@ -1040,6 +1165,69 @@
                 window.saveToFirebase();
                 renderTable();
                 closeModal('addSessionModal');
+            }
+        });
+
+        document.getElementById('btnConfirmEditTrick').addEventListener('click', () => {
+            const name = document.getElementById('editTrickNameInput').value.trim();
+            const level = document.getElementById('editTrickLevelSelect').value;
+            if (name && currentEditTrickIndex !== null) {
+                getCurrentData().tricks[currentEditTrickIndex].name = name;
+                getCurrentData().tricks[currentEditTrickIndex].level = level;
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+                closeModal('editTrickModal');
+                currentEditTrickIndex = null;
+            }
+        });
+
+        document.getElementById('btnDeleteTrickFromModal').addEventListener('click', () => {
+            if (currentEditTrickIndex !== null) {
+                const name = getCurrentData().tricks[currentEditTrickIndex].name;
+                if (confirm(`Eliminar "${name}"?`)) {
+                    getCurrentData().tricks.splice(currentEditTrickIndex, 1);
+                    window.saveToFirebase();
+                    renderTable();
+                    renderSummary();
+                    closeModal('editTrickModal');
+                    currentEditTrickIndex = null;
+                }
+            }
+        });
+
+        document.getElementById('btnConfirmEditSession').addEventListener('click', () => {
+            const name = document.getElementById('editSessionNameInput').value.trim();
+            if (name && currentEditSessionIndex !== null) {
+                const oldName = getCurrentData().sessions[currentEditSessionIndex];
+                getCurrentData().sessions[currentEditSessionIndex] = name;
+                // Actualitzar referències als intents
+                getCurrentData().tricks.forEach(trick => {
+                    if (trick.attempts[oldName]) {
+                        trick.attempts[name] = trick.attempts[oldName];
+                        delete trick.attempts[oldName];
+                    }
+                });
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+                closeModal('editSessionModal');
+                currentEditSessionIndex = null;
+            }
+        });
+
+        document.getElementById('btnDeleteSessionFromModal').addEventListener('click', () => {
+            if (currentEditSessionIndex !== null) {
+                const name = getCurrentData().sessions[currentEditSessionIndex];
+                if (confirm(`Eliminar "${name}"?`)) {
+                    getCurrentData().sessions.splice(currentEditSessionIndex, 1);
+                    getCurrentData().tricks.forEach(t => delete t.attempts[name]);
+                    window.saveToFirebase();
+                    renderTable();
+                    renderSummary();
+                    closeModal('editSessionModal');
+                    currentEditSessionIndex = null;
+                }
             }
         });
 
@@ -1098,8 +1286,8 @@
 
         // Tancar menú clicant fora
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.menu-button')) {
-                document.getElementById('menuDropdown').classList.remove('active');
+            if (!e.target.closest('.download-button') && !e.target.closest('#downloadMenu')) {
+                document.getElementById('downloadMenu').classList.remove('active');
             }
         });
 
