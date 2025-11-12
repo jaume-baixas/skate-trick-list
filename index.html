@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4F46E5">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Trucs">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛹</text></svg>">
     <title>Seguiment de Trucs</title>
     <link rel="manifest" href="manifest.json">
     <style>
@@ -107,7 +109,7 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.2s;
         }
 
@@ -542,7 +544,7 @@
                         <option value="default">Skater 1</option>
                     </select>
                     <button class="btn-add-skater" id="btnAddSkater">+</button>
-                    <button class="btn-delete-skater" id="btnDeleteSkater">✕</button>
+                    <button class="btn-delete-skater" id="btnDeleteSkater">🗑️</button>
                 </div>
             </div>
             <div class="menu-button">
@@ -767,6 +769,11 @@
             const data = getCurrentData();
             const header = document.getElementById('tableHeader');
             const body = document.getElementById('tableBody');
+
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes, esperant...');
+                return;
+            }
 
             header.innerHTML = '<th>Truc</th><th>Nivell</th>';
             data.sessions.forEach((session, i) => {
