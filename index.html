@@ -397,6 +397,88 @@
             font-size: 1.3em;
         }
 
+        .radar-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .radar-container h3 {
+            color: #1F2937;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        #radarCanvas {
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .group-header {
+            background: #F3F4F6;
+            font-weight: 700;
+            color: #4F46E5;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-sessions {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .chart-sessions h3 {
+            color: #1F2937;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .chart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .chart-table th,
+        .chart-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #E5E7EB;
+        }
+
+        .chart-table th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+        }
+
+        .chart-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            background: #F9FAFB;
+        }
+
+        .attempt-cell {
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .attempt-1 { background: #D1FAE5; color: #065F46; }
+        .attempt-2 { background: #A7F3D0; color: #065F46; }
+        .attempt-3 { background: #FEF3C7; color: #92400E; }
+        .attempt-4 { background: #FED7AA; color: #9A3412; }
+        .attempt-5 { background: #FECACA; color: #991B1B; }
+        .attempt-plus { background: #FEE2E2; color: #991B1B; }
+        .attempt-none { background: #F3F4F6; color: #9CA3AF; }
+
         .modal {
             display: none;
             position: fixed;
@@ -669,6 +751,8 @@
         <input type="file" id="importFile" style="display:none" accept=".json,.csv">
     </div>
 
+    <canvas id="radarCanvas" width="400" height="400" style="display:none;"></canvas>
+
     <!-- Modal Editar Truc -->
     <div class="modal" id="editTrickModal">
         <div class="modal-content">
@@ -678,6 +762,14 @@
                 <option value="facil">Fàcil</option>
                 <option value="mitja">Mitjà</option>
                 <option value="dificil">Difícil</option>
+            </select>
+            <select id="editTrickGroupSelect" class="modal-select">
+                <option value="flatground">Flatground</option>
+                <option value="slides">Slides</option>
+                <option value="grinds">Grinds</option>
+                <option value="spins">Spins</option>
+                <option value="transition">Transition/Ramp</option>
+                <option value="combo">Combo</option>
             </select>
             <div class="modal-buttons">
                 <button class="btn-danger" id="btnDeleteTrickFromModal">Eliminar</button>
@@ -709,6 +801,14 @@
                 <option value="facil">Fàcil</option>
                 <option value="mitja" selected>Mitjà</option>
                 <option value="dificil">Difícil</option>
+            </select>
+            <select id="trickGroupSelect" class="modal-select">
+                <option value="flatground">Flatground</option>
+                <option value="slides">Slides</option>
+                <option value="grinds">Grinds</option>
+                <option value="spins">Spins</option>
+                <option value="transition">Transition/Ramp</option>
+                <option value="combo">Combo</option>
             </select>
             <div class="modal-buttons">
                 <button class="btn-secondary" id="btnCancelTrick">Cancel·lar</button>
@@ -768,8 +868,9 @@
                     age: null,
                     sessions: ['Sessió 1', 'Sessió 2'],
                     tricks: [
-                        { name: 'Ollie', level: 'facil', attempts: {} },
-                        { name: 'Kickflip', level: 'mitja', attempts: {} }
+                        { name: 'Ollie', level: 'facil', group: 'flatground', attempts: {} },
+                        { name: 'Kickflip', level: 'mitja', group: 'flatground', attempts: {} },
+                        { name: '50-50', level: 'mitja', group: 'grinds', attempts: {} }
                     ]
                 }
             }
@@ -854,6 +955,15 @@
         // Variables globals
         let data = window.allData;
 
+        const GROUPS = {
+            flatground: 'Flatground',
+            slides: 'Slides',
+            grinds: 'Grinds',
+            spins: 'Spins',
+            transition: 'Transition/Ramp',
+            combo: 'Combo'
+        };
+
         function getCurrentData() {
             return window.allData.skaters[window.allData.currentSkater];
         }
@@ -882,35 +992,55 @@
                 return;
             }
 
+            // Agrupar trucs per grup
+            const groupedTricks = {};
+            data.tricks.forEach(trick => {
+                const group = trick.group || 'flatground';
+                if (!groupedTricks[group]) groupedTricks[group] = [];
+                groupedTricks[group].push(trick);
+            });
+
             header.innerHTML = '<th>Truc</th><th>Nivell</th>';
             data.sessions.forEach((session, i) => {
                 header.innerHTML += `<th>${session} <button class="edit-btn" onclick="openEditSessionModal(${i})">✎</button></th>`;
             });
 
             body.innerHTML = '';
-            data.tricks.forEach((trick, ti) => {
-                const levelClass = `level-${trick.level || 'mitja'}`;
-                const levelText = {'facil': 'Fàcil', 'mitja': 'Mitjà', 'dificil': 'Difícil'}[trick.level || 'mitja'];
+            
+            // Renderitzar per grups
+            Object.keys(GROUPS).forEach(groupKey => {
+                if (groupedTricks[groupKey] && groupedTricks[groupKey].length > 0) {
+                    // Capçalera del grup
+                    let groupRow = `<tr class="group-header"><td colspan="${2 + data.sessions.length}">${GROUPS[groupKey]}</td></tr>`;
+                    body.innerHTML += groupRow;
+                    
+                    // Trucs del grup
+                    groupedTricks[groupKey].forEach((trick, localIndex) => {
+                        const globalIndex = data.tricks.indexOf(trick);
+                        const levelClass = `level-${trick.level || 'mitja'}`;
+                        const levelText = {'facil': 'Fàcil', 'mitja': 'Mitjà', 'dificil': 'Difícil'}[trick.level || 'mitja'];
 
-                let row = `<tr>
-                    <td><strong>${trick.name}</strong><button class="edit-btn" onclick="openEditTrickModal(${ti})">✎</button></td>
-                    <td><span class="level-badge ${levelClass}">${levelText}</span></td>`;
+                        let row = `<tr>
+                            <td><strong>${trick.name}</strong><button class="edit-btn" onclick="openEditTrickModal(${globalIndex})">✎</button></td>
+                            <td><span class="level-badge ${levelClass}">${levelText}</span></td>`;
 
-                data.sessions.forEach((session) => {
-                    const attempt = trick.attempts[session] || '—';
-                    row += `<td><select onchange="updateAttempt(${ti}, '${session}', this.value)">
-                        <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
-                        <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
-                        <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
-                        <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
-                        <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
-                        <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
-                        <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
-                    </select></td>`;
-                });
+                        data.sessions.forEach((session) => {
+                            const attempt = trick.attempts[session] || '—';
+                            row += `<td><select onchange="updateAttempt(${globalIndex}, '${session}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                                <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
+                            </select></td>`;
+                        });
 
-                row += '</tr>';
-                body.innerHTML += row;
+                        row += '</tr>';
+                        body.innerHTML += row;
+                    });
+                }
             });
         }
 
@@ -989,6 +1119,7 @@
             const trick = getCurrentData().tricks[index];
             document.getElementById('editTrickNameInput').value = trick.name;
             document.getElementById('editTrickLevelSelect').value = trick.level;
+            document.getElementById('editTrickGroupSelect').value = trick.group || 'flatground';
             document.getElementById('editTrickModal').classList.add('active');
         }
 
@@ -1149,8 +1280,9 @@
         document.getElementById('btnConfirmTrick').addEventListener('click', () => {
             const name = document.getElementById('trickNameInput').value.trim();
             const level = document.getElementById('trickLevelSelect').value;
+            const group = document.getElementById('trickGroupSelect').value;
             if (name) {
-                getCurrentData().tricks.push({ name, level, attempts: {} });
+                getCurrentData().tricks.push({ name, level, group, attempts: {} });
                 window.saveToFirebase();
                 renderTable();
                 renderSummary();
@@ -1171,9 +1303,11 @@
         document.getElementById('btnConfirmEditTrick').addEventListener('click', () => {
             const name = document.getElementById('editTrickNameInput').value.trim();
             const level = document.getElementById('editTrickLevelSelect').value;
+            const group = document.getElementById('editTrickGroupSelect').value;
             if (name && currentEditTrickIndex !== null) {
                 getCurrentData().tricks[currentEditTrickIndex].name = name;
                 getCurrentData().tricks[currentEditTrickIndex].level = level;
+                getCurrentData().tricks[currentEditTrickIndex].group = group;
                 window.saveToFirebase();
                 renderTable();
                 renderSummary();
