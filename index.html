@@ -1,4 +1,101 @@
-<!DOCTYPE html>
+function renderSummary() {
+            console.log('🔵 START renderSummary');
+            const data = getCurrentData();
+            
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes');
+                return;
+            }
+            
+            const summaryDiv = document.getElementById('summary');
+            if (!summaryDiv) {
+                console.error('❌ No summary div');
+                return;
+            }
+            
+            console.log('✅ Div trobat, construint HTML...');
+            
+            // Construir HTML pas a pas
+            let parts = [];
+            
+            // Part 1: Títol
+            parts.push('<h2>📊 Resum de Progressos</h2>');
+            
+            // Part 2: Gràfica mitjanes
+            parts.push('<div class="summary-overall">');
+            parts.push('<h3>📈 Mitjana d\'Intents per Truc</h3>');
+            
+            if (data.tricks.length > 0) {
+                data.tricks.forEach(trick => {
+                    const vals = Object.values(trick.attempts || {});
+                    const nums = vals.filter(a => a && a !== '—' && a !== '+5').map(a => parseInt(a)).filter(n => !isNaN(n));
+                    
+                    if (nums.length > 0) {
+                        const avg = nums.reduce((a,b) => a+b, 0) / nums.length;
+                        const pct = ((6 - avg) / 5) * 100;
+                        let color = '#9CA3AF';
+                        if (avg <= 1.5) color = '#10B981';
+                        else if (avg <= 2.5) color = '#34D399';
+                        else if (avg <= 3.5) color = '#FBBF24';
+                        else if (avg <= 4.5) color = '#FB923C';
+                        else color = '#F87171';
+                        
+                        const txt = avg.toFixed(1);
+                        parts.push(`<div class="chart-bar"><div class="chart-label" style="color:white;width:120px">${trick.name}</div><div class="chart-bar-container"><div class="chart-bar-fill" style="width:${pct}%;background:${color}">${pct>15?txt:''}</div></div><div class="chart-value" style="color:white">${pct>15?'':txt}</div></div>`);
+                    }
+                });
+            }
+            
+            parts.push('</div>');
+            
+            // Part 3: Radar
+            parts.push('<div class="radar-container">');
+            parts.push('<h3>🎯 Anàlisi per Categories</h3>');
+            parts.push('<canvas id="radarChart" width="500" height="500" style="background:white;max-width:100%;height:auto"></canvas>');
+            parts.push('</div>');
+            
+            // Part 4: Taula
+            parts.push('<div class="chart-sessions"><h3>📅 Progressió per Sessions</h3>');
+            parts.push('<div style="overflow-x:auto"><table class="chart-table"><thead><tr><th>Truc</th>');
+            
+            data.sessions.forEach(s => parts.push(`<th>${s}</th>`));
+            parts.push('</tr></thead><tbody>');
+            
+            data.tricks.forEach(trick => {
+                parts.push(`<tr><td>${trick.name}</td>`);
+                data.sessions.forEach(session => {
+                    const att = trick.attempts[session];
+                    let cls = 'attempt-none';
+                    let txt = '—';
+                    if (att && att !== '—') {
+                        if (att === '+5') {
+                            cls = 'attempt-plus';
+                            txt = '+5';
+                        } else {
+                            cls = `attempt-${att}`;
+                            txt = att;
+                        }
+                    }
+                    parts.push(`<td><span class="attempt-cell ${cls}">${txt}</span></td>`);
+                });
+                parts.push('</tr>');
+            });
+            
+            parts.push('</tbody></table></div></div>');
+            
+            console.log('📦 Parts construïdes:', parts.length);
+            
+            // Insertar tot d'un cop
+            summaryDiv.innerHTML = parts.join('');
+            
+            console.log('✅ HTML insertat');
+            
+            // Dibuixar radar
+            setTimeout(() => {
+                console.log('🎨 Cridant drawRadarChart');
+                drawRadarChart();
+            }, 300);
+        }<!DOCTYPE html>
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
