@@ -403,6 +403,7 @@
             border-radius: 15px;
             margin-bottom: 30px;
             border: 1px solid #E5E7EB;
+            text-align: center;
         }
 
         .radar-container h3 {
@@ -411,10 +412,9 @@
             font-size: 1.3em;
         }
 
-        #radarCanvas {
-            max-width: 400px;
-            margin: 0 auto;
-            display: block;
+        .radar-container canvas {
+            max-width: 100%;
+            height: auto;
         }
 
         .group-header {
@@ -750,8 +750,6 @@
         </div>
         <input type="file" id="importFile" style="display:none" accept=".json,.csv">
     </div>
-
-    <canvas id="radarCanvas" width="400" height="400" style="display:none;"></canvas>
 
     <!-- Modal Editar Truc -->
     <div class="modal" id="editTrickModal">
