@@ -1,45 +1,1536 @@
-const CACHE_NAME = 'trucs-v10'; // Canvia aquest número cada vegada que actualitzis
-const urlsToCache = [
-  '.',
-  'index.html',
-  'manifest.json'
-];
+function renderSummary() {
+            console.log('🔵 START renderSummary');
+            const data = getCurrentData();
+            
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes');
+                return;
+            }
+            
+            const summaryDiv = document.getElementById('summary');
+            if (!summaryDiv) {
+                console.error('❌ No summary div');
+                return;
+            }
+            
+            console.log('✅ Div trobat, construint HTML...');
+            
+            // Construir HTML pas a pas
+            let parts = [];
+            
+            // Part 1: Títol
+            parts.push('<h2>📊 Resum de Progressos</h2>');
+            
+            // Part 2: Gràfica mitjanes
+            parts.push('<div class="summary-overall">');
+            parts.push('<h3>📈 Mitjana d\'Intents per Truc</h3>');
+            
+            if (data.tricks.length > 0) {
+                data.tricks.forEach(trick => {
+                    const vals = Object.values(trick.attempts || {});
+                    const nums = vals.filter(a => a && a !== '—' && a !== '+5').map(a => parseInt(a)).filter(n => !isNaN(n));
+                    
+                    if (nums.length > 0) {
+                        const avg = nums.reduce((a,b) => a+b, 0) / nums.length;
+                        const pct = ((6 - avg) / 5) * 100;
+                        let color = '#9CA3AF';
+                        if (avg <= 1.5) color = '#10B981';
+                        else if (avg <= 2.5) color = '#34D399';
+                        else if (avg <= 3.5) color = '#FBBF24';
+                        else if (avg <= 4.5) color = '#FB923C';
+                        else color = '#F87171';
+                        
+                        const txt = avg.toFixed(1);
+                        parts.push(`<div class="chart-bar"><div class="chart-label" style="color:white;width:120px">${trick.name}</div><div class="chart-bar-container"><div class="chart-bar-fill" style="width:${pct}%;background:${color}">${pct>15?txt:''}</div></div><div class="chart-value" style="color:white">${pct>15?'':txt}</div></div>`);
+                    }
+                });
+            }
+            
+            parts.push('</div>');
+            
+            // Part 3: Radar
+            parts.push('<div class="radar-container">');
+            parts.push('<h3>🎯 Anàlisi per Categories</h3>');
+            parts.push('<canvas id="radarChart" width="500" height="500" style="background:white;max-width:100%;height:auto"></canvas>');
+            parts.push('</div>');
+            
+            // Part 4: Taula
+            parts.push('<div class="chart-sessions"><h3>📅 Progressió per Sessions</h3>');
+            parts.push('<div style="overflow-x:auto"><table class="chart-table"><thead><tr><th>Truc</th>');
+            
+            data.sessions.forEach(s => parts.push(`<th>${s}</th>`));
+            parts.push('</tr></thead><tbody>');
+            
+            data.tricks.forEach(trick => {
+                parts.push(`<tr><td>${trick.name}</td>`);
+                data.sessions.forEach(session => {
+                    const att = trick.attempts[session];
+                    let cls = 'attempt-none';
+                    let txt = '—';
+                    if (att && att !== '—') {
+                        if (att === '+5') {
+                            cls = 'attempt-plus';
+                            txt = '+5';
+                        } else {
+                            cls = `attempt-${att}`;
+                            txt = att;
+                        }
+                    }
+                    parts.push(`<td><span class="attempt-cell ${cls}">${txt}</span></td>`);
+                });
+                parts.push('</tr>');
+            });
+            
+            parts.push('</tbody></table></div></div>');
+            
+            console.log('📦 Parts construïdes:', parts.length);
+            
+            // Insertar tot d'un cop
+            summaryDiv.innerHTML = parts.join('');
+            
+            console.log('✅ HTML insertat');
+            
+            // Dibuixar radar
+            setTimeout(() => {
+                console.log('🎨 Cridant drawRadarChart');
+                drawRadarChart();
+            }, 300);
+        }<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trucs">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛹</text></svg>">
+    <title>Seguiment de Trucs</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
-  self.skipWaiting(); // Força instal·lació immediata
-});
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #F3F4F6;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
 
-self.addEventListener('fetch', event => {
-  // Network first, cache fallback
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1F2937;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .title-area {
+            margin-bottom: 15px;
+        }
+
+        .skater-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .skater-select {
+            padding: 8px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            color: #374151;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .skater-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+        }
+
+        .btn-add-skater {
+            padding: 8px 12px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-add-skater:hover {
+            background: #4338CA;
+        }
+
+        .btn-delete-skater {
+            padding: 6px 10px;
+            background: transparent;
+            color: #9CA3AF;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-delete-skater:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .menu-button {
+            position: relative;
+        }
+
+        .burger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+        }
+
+        .burger-icon span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: #374151;
+            border-radius: 2px;
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            margin-top: 10px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #F9FAFB;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #D1D5DB;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.9em;
+        }
+
+        th:first-child,
+        th:nth-child(2) {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background: #F9FAFB;
+        }
+
+        th:nth-child(2) {
+            left: 80px;
+            min-width: 80px;
+            max-width: 80px;
+        }
+
+        td:first-child,
+        td:nth-child(2) {
+            position: sticky;
+            background: white;
+            z-index: 5;
+        }
+
+        td:first-child {
+            left: 0;
+            min-width: 80px;
+            max-width: 80px;
+        }
+
+        td:nth-child(2) {
+            left: 80px;
+            min-width: 80px;
+            max-width: 80px;
+        }
+
+        tr:hover td:first-child,
+        tr:hover td:nth-child(2) {
+            background: #F9FAFB;
+        }
+
+        td {
+            background: white;
+        }
+
+        tr:hover td {
+            background: #F9FAFB;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #4F46E5;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .summary {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #1F2937;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-week {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .chart-week h3 {
+            color: #4F46E5;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #F9FAFB;
+            border-radius: 8px;
+        }
+
+        .chart-label {
+            width: 80px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            height: 30px;
+            background: #E5E7EB;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .chart-value {
+            min-width: 70px;
+            text-align: right;
+            font-weight: 600;
+            color: #6B7280;
+            font-size: 0.85em;
+        }
+
+        .summary-overall {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .summary-overall h3 {
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .radar-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .radar-container h3 {
+            color: #1F2937;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .radar-container canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .group-header {
+            background: #F3F4F6;
+            font-weight: 700;
+            color: #4F46E5;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-sessions {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .chart-sessions h3 {
+            color: #1F2937;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .chart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .chart-table th,
+        .chart-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #E5E7EB;
+        }
+
+        .chart-table th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+        }
+
+        .chart-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            background: #F9FAFB;
+        }
+
+        .attempt-cell {
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .attempt-1 { background: #D1FAE5; color: #065F46; }
+        .attempt-2 { background: #A7F3D0; color: #065F46; }
+        .attempt-3 { background: #FEF3C7; color: #92400E; }
+        .attempt-4 { background: #FED7AA; color: #9A3412; }
+        .attempt-5 { background: #FECACA; color: #991B1B; }
+        .attempt-plus { background: #FEE2E2; color: #991B1B; }
+        .attempt-none { background: #F3F4F6; color: #9CA3AF; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            color: #4F46E5;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .delete-btn:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .edit-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 2px 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        .edit-btn:hover {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .download-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .download-button:hover {
+            background: #4338CA;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.5);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-facil {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .level-mitja {
+            background: #FED7AA;
+            color: #9A3412;
+        }
+
+        .level-dificil {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: #F9FAFB;
+            border-radius: 0 0 10px 10px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .btn-table {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            background: white;
+            border: 2px solid #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-table:hover {
+            border-color: #4F46E5;
+            background: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .modal-select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .skater-selector {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .skater-select {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <div class="header-left">
+                <div class="title-area">
+                    <h1>🛹 Seguiment de Trucs</h1>
+                    <p class="subtitle">Registra els teus progressos sessió a sessió</p>
+                </div>
+                <div class="skater-selector">
+                    <select class="skater-select" id="skaterSelect">
+                        <option value="default">Skater 1</option>
+                    </select>
+                    <button class="btn-add-skater" id="btnAddSkater">+</button>
+                    <button class="btn-delete-skater" id="btnDeleteSkater">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn-table" id="btnAddTrick">➕ Afegir Truc</button>
+            <button class="btn-table" id="btnAddSession">📅 Afegir Sessió</button>
+        </div>
+
+        <div class="table-container">
+            <table id="tricksTable">
+                <thead>
+                    <tr id="tableHeader">
+                        <th>Truc</th>
+                        <th>Nivell</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary" id="summary"></div>
+
+        <!-- Botó flotant descarregar -->
+        <button class="download-button" id="btnDownload">⬇</button>
+        <div class="menu-dropdown" id="downloadMenu" style="position: fixed; bottom: 100px; right: 30px;">
+            <div class="menu-item" id="btnExportJSON">💾 Exportar JSON</div>
+            <div class="menu-item" id="btnExportCSV">📊 Exportar CSV</div>
+            <div class="menu-item" id="btnImport">📥 Importar Dades</div>
+        </div>
+        <input type="file" id="importFile" style="display:none" accept=".json,.csv">
+    </div>
+
+    <!-- Modal Editar Truc -->
+    <div class="modal" id="editTrickModal">
+        <div class="modal-content">
+            <h2>Editar Truc</h2>
+            <input type="text" id="editTrickNameInput" placeholder="Nom del truc...">
+            <select id="editTrickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja">Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <select id="editTrickGroupSelect" class="modal-select">
+                <option value="flatground">Flatground</option>
+                <option value="slides">Slides</option>
+                <option value="grinds">Grinds</option>
+                <option value="spins">Spins</option>
+                <option value="transition">Transition/Ramp</option>
+                <option value="combo">Combo</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-danger" id="btnDeleteTrickFromModal">Eliminar</button>
+                <button class="btn-secondary" id="btnCancelEditTrick">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmEditTrick">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Sessió -->
+    <div class="modal" id="editSessionModal">
+        <div class="modal-content">
+            <h2>Editar Sessió</h2>
+            <input type="text" id="editSessionNameInput" placeholder="Nom de la sessió...">
+            <div class="modal-buttons">
+                <button class="btn-danger" id="btnDeleteSessionFromModal">Eliminar</button>
+                <button class="btn-secondary" id="btnCancelEditSession">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmEditSession">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Afegir Truc -->
+    <div class="modal" id="addTrickModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Truc</h2>
+            <input type="text" id="trickNameInput" placeholder="Nom del truc...">
+            <select id="trickLevelSelect" class="modal-select">
+                <option value="facil">Fàcil</option>
+                <option value="mitja" selected>Mitjà</option>
+                <option value="dificil">Difícil</option>
+            </select>
+            <select id="trickGroupSelect" class="modal-select">
+                <option value="flatground">Flatground</option>
+                <option value="slides">Slides</option>
+                <option value="grinds">Grinds</option>
+                <option value="spins">Spins</option>
+                <option value="transition">Transition/Ramp</option>
+                <option value="combo">Combo</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="btnCancelTrick">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmTrick">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Afegir Sessió -->
+    <div class="modal" id="addSessionModal">
+        <div class="modal-content">
+            <h2>Afegir Nova Sessió</h2>
+            <input type="text" id="sessionNameInput" placeholder="Nom de la sessió (ex: Sessió 1)...">
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="btnCancelSession">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmSession">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Afegir Skater -->
+    <div class="modal" id="addSkaterModal">
+        <div class="modal-content">
+            <h2>Afegir Nou Skater</h2>
+            <input type="text" id="skaterNameInput" placeholder="Nom del skater...">
+            <input type="number" id="skaterAgeInput" placeholder="Edat..." min="1" max="120">
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="btnCancelSkater">Cancel·lar</button>
+                <button class="btn-primary" id="btnConfirmSkater">Afegir</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6yD7l5WHJWylq0fdBaq7zaEV3ahInIs",
+            authDomain: "skate-tricks-list.firebaseapp.com",
+            databaseURL: "https://skate-tricks-list-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skate-tricks-list",
+            storageBucket: "skate-tricks-list.firebasestorage.app",
+            messagingSenderId: "1038259811397",
+            appId: "1:1038259811397:web:9534d8788f389c772d9f2c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dataRef = ref(db, 'allSkaterData');
+
+        window.allData = {
+            currentSkater: 'default',
+            skaters: {
+                'default': {
+                    name: 'Skater 1',
+                    age: null,
+                    sessions: ['Sessió 1', 'Sessió 2'],
+                    tricks: [
+                        { name: 'Ollie', level: 'facil', group: 'flatground', attempts: {} },
+                        { name: 'Kickflip', level: 'mitja', group: 'flatground', attempts: {} },
+                        { name: '50-50', level: 'mitja', group: 'grinds', attempts: {} }
+                    ]
+                }
+            }
+        };
+
+        let firebaseReady = false;
+        let lastSaveTime = 0;
+
+        // Guardar a Firebase
+        window.saveToFirebase = function() {
+            if (!firebaseReady) {
+                console.log('⏳ Firebase no està llest...');
+                return;
+            }
+            
+            // Evitar guardar massa ràpid
+            const now = Date.now();
+            if (now - lastSaveTime < 500) {
+                console.log('⏳ Esperant per no saturar Firebase...');
+                setTimeout(() => window.saveToFirebase(), 600);
+                return;
+            }
+            
+            lastSaveTime = now;
+            console.log('💾 Guardant a Firebase...', window.allData);
+            
+            set(dataRef, window.allData)
+                .then(() => {
+                    console.log('✅ Dades guardades correctament!');
+                    localStorage.setItem('tricksBackup', JSON.stringify(window.allData));
+                })
+                .catch((err) => {
+                    console.error('❌ Error guardant:', err);
+                    localStorage.setItem('tricksBackup', JSON.stringify(window.allData));
+                });
+        }
+
+        // Carregar NOMÉS una vegada al iniciar
+        console.log('🔄 Carregant dades inicials de Firebase...');
+        get(dataRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                window.allData = snapshot.val();
+                console.log('✅ Dades carregades:', window.allData);
+            } else {
+                console.log('ℹ️ No hi ha dades. Usant per defecte');
+                const backup = localStorage.getItem('tricksBackup');
+                if (backup) {
+                    try {
+                        window.allData = JSON.parse(backup);
+                        console.log('✅ Carregat del backup local');
+                    } catch (e) {
+                        console.log('ℹ️ Usant dades per defecte');
+                    }
+                }
+                // Guardar dades inicials
+                set(dataRef, window.allData).then(() => {
+                    console.log('✅ Dades inicials guardades');
+                });
+            }
+            
+            firebaseReady = true;
+            
+            if (window.refreshUI) {
+                window.refreshUI();
+            }
+        }).catch((error) => {
+            console.error('❌ Error carregant:', error);
+            const backup = localStorage.getItem('tricksBackup');
+            if (backup) {
+                try {
+                    window.allData = JSON.parse(backup);
+                    console.log('✅ Usant backup local');
+                } catch (e) {}
+            }
+            firebaseReady = true;
+            if (window.refreshUI) {
+                window.refreshUI();
+            }
         });
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
-});
+    </script>
+    <script>
+        // Variables globals
+        let data = window.allData;
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Eliminant cache antiga:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
+        const GROUPS = {
+            flatground: 'Flatground',
+            slides: 'Slides',
+            grinds: 'Grinds',
+            spins: 'Spins',
+            transition: 'Transition/Ramp',
+            combo: 'Combo'
+        };
+
+        function getCurrentData() {
+            return window.allData.skaters[window.allData.currentSkater];
+        }
+
+        function updateSkaterList() {
+            const select = document.getElementById('skaterSelect');
+            select.innerHTML = '';
+            
+            for (let id in window.allData.skaters) {
+                const skater = window.allData.skaters[id];
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = skater.name + (skater.age ? ` (${skater.age} anys)` : '');
+                if (id === window.allData.currentSkater) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        function renderTable() {
+            const data = getCurrentData();
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes, esperant...');
+                return;
+            }
+
+            // Agrupar trucs per grup
+            const groupedTricks = {};
+            data.tricks.forEach(trick => {
+                const group = trick.group || 'flatground';
+                if (!groupedTricks[group]) groupedTricks[group] = [];
+                groupedTricks[group].push(trick);
+            });
+
+            header.innerHTML = '<th>Truc</th><th>Nivell</th>';
+            data.sessions.forEach((session, i) => {
+                header.innerHTML += `<th>${session} <button class="edit-btn" onclick="openEditSessionModal(${i})">✎</button></th>`;
+            });
+
+            body.innerHTML = '';
+            
+            // Renderitzar per grups
+            Object.keys(GROUPS).forEach(groupKey => {
+                if (groupedTricks[groupKey] && groupedTricks[groupKey].length > 0) {
+                    // Capçalera del grup
+                    let groupRow = `<tr class="group-header"><td colspan="${2 + data.sessions.length}">${GROUPS[groupKey]}</td></tr>`;
+                    body.innerHTML += groupRow;
+                    
+                    // Trucs del grup
+                    groupedTricks[groupKey].forEach((trick, localIndex) => {
+                        const globalIndex = data.tricks.indexOf(trick);
+                        const levelClass = `level-${trick.level || 'mitja'}`;
+                        const levelText = {'facil': 'Fàcil', 'mitja': 'Mitjà', 'dificil': 'Difícil'}[trick.level || 'mitja'];
+
+                        let row = `<tr>
+                            <td><strong>${trick.name}</strong><button class="edit-btn" onclick="openEditTrickModal(${globalIndex})">✎</button></td>
+                            <td><span class="level-badge ${levelClass}">${levelText}</span></td>`;
+
+                        data.sessions.forEach((session) => {
+                            const attempt = trick.attempts[session] || '—';
+                            row += `<td><select onchange="updateAttempt(${globalIndex}, '${session}', this.value)">
+                                <option value="—" ${attempt === '—' ? 'selected' : ''}>—</option>
+                                <option value="1" ${attempt === '1' ? 'selected' : ''}>1</option>
+                                <option value="2" ${attempt === '2' ? 'selected' : ''}>2</option>
+                                <option value="3" ${attempt === '3' ? 'selected' : ''}>3</option>
+                                <option value="4" ${attempt === '4' ? 'selected' : ''}>4</option>
+                                <option value="5" ${attempt === '5' ? 'selected' : ''}>5</option>
+                                <option value="+5" ${attempt === '+5' ? 'selected' : ''}>+5</option>
+                            </select></td>`;
+                        });
+
+                        row += '</tr>';
+                        body.innerHTML += row;
+                    });
+                }
+            });
+        }
+
+        function renderSummary() {
+            const data = getCurrentData();
+            
+            if (!data || !data.sessions || !data.tricks) {
+                console.warn('⚠️ Dades incompletes per resum, esperant...');
+                return;
+            }
+            
+            let html = '<h2>📊 Resum de Progressos</h2><div class="chart-container">';
+
+            data.sessions.forEach(session => {
+                html += `<div class="chart-week"><h3>${session}</h3>`;
+
+                data.tricks.forEach(trick => {
+                    const attempt = trick.attempts[session];
+                    let displayValue = 'No aconseguit';
+                    let percentage = 0;
+                    let barColor = '#9CA3AF';
+
+                    if (attempt && attempt !== '—') {
+                        if (attempt === '+5') {
+                            displayValue = '+5 intents';
+                            percentage = 10;
+                            barColor = '#DC2626';
+                        } else {
+                            const num = parseInt(attempt);
+                            displayValue = `Intent ${num}`;
+                            percentage = ((6 - num) / 5) * 100;
+                            
+                            if (num === 1) barColor = '#10B981';
+                            else if (num === 2) barColor = '#34D399';
+                            else if (num === 3) barColor = '#FBBF24';
+                            else if (num === 4) barColor = '#FB923C';
+                            else if (num === 5) barColor = '#F87171';
+                        }
+                    }
+
+                    html += `<div class="chart-bar">
+                        <div class="chart-label">${trick.name}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barColor};">
+                                ${percentage > 15 ? displayValue : ''}
+                            </div>
+                        </div>
+                        <div class="chart-value">${percentage > 15 ? '' : displayValue}</div>
+                    </div>`;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            document.getElementById('summary').innerHTML = html;
+        }
+
+        window.refreshUI = function() {
+            updateSkaterList();
+            renderTable();
+            renderSummary();
+        }
+
+        window.updateAttempt = function(ti, session, value) {
+            getCurrentData().tricks[ti].attempts[session] = value;
+            window.saveToFirebase();
+            renderSummary();
+        }
+
+        let currentEditTrickIndex = null;
+        let currentEditSessionIndex = null;
+
+        window.openEditTrickModal = function(index) {
+            currentEditTrickIndex = index;
+            const trick = getCurrentData().tricks[index];
+            document.getElementById('editTrickNameInput').value = trick.name;
+            document.getElementById('editTrickLevelSelect').value = trick.level;
+            document.getElementById('editTrickGroupSelect').value = trick.group || 'flatground';
+            document.getElementById('editTrickModal').classList.add('active');
+        }
+
+        window.openEditSessionModal = function(index) {
+            currentEditSessionIndex = index;
+            const session = getCurrentData().sessions[index];
+            document.getElementById('editSessionNameInput').value = session;
+            document.getElementById('editSessionModal').classList.add('active');
+        }
+
+        window.deleteTrick = function(i) {
+            if (confirm(`Eliminar "${getCurrentData().tricks[i].name}"?`)) {
+                getCurrentData().tricks.splice(i, 1);
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        window.deleteSession = function(i) {
+            if (confirm(`Eliminar "${getCurrentData().sessions[i]}"?`)) {
+                const session = getCurrentData().sessions[i];
+                getCurrentData().sessions.splice(i, 1);
+                getCurrentData().tricks.forEach(t => delete t.attempts[session]);
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+            }
+        }
+
+        // Modals
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Event listeners
+        document.getElementById('skaterSelect').addEventListener('change', function() {
+            window.allData.currentSkater = this.value;
+            renderTable();
+            renderSummary();
+        });
+
+        document.getElementById('btnAddSkater').addEventListener('click', () => {
+            openModal('addSkaterModal');
+            document.getElementById('skaterNameInput').value = '';
+            document.getElementById('skaterAgeInput').value = '';
+            document.getElementById('skaterNameInput').focus();
+        });
+
+        document.getElementById('btnDeleteSkater').addEventListener('click', () => {
+            const skaterCount = Object.keys(window.allData.skaters).length;
+            
+            if (skaterCount <= 1) {
+                alert('No pots eliminar l\'únic skater!');
+                return;
+            }
+
+            const currentSkater = window.allData.skaters[window.allData.currentSkater];
+            const skaterName = currentSkater.name + (currentSkater.age ? ` (${currentSkater.age} anys)` : '');
+            
+            if (confirm(`Segur que vols eliminar "${skaterName}"?\n\nAquesta acció no es pot desfer.`)) {
+                const currentId = window.allData.currentSkater;
+                
+                // Eliminar skater
+                delete window.allData.skaters[currentId];
+                
+                // Seleccionar el primer skater disponible
+                const firstSkater = Object.keys(window.allData.skaters)[0];
+                window.allData.currentSkater = firstSkater;
+                
+                window.saveToFirebase();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                
+                console.log('🗑️ Skater eliminat');
+            }
+        });
+
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            document.getElementById('downloadMenu').classList.toggle('active');
+        });
+
+        document.getElementById('btnExportJSON').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(window.allData, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            document.getElementById('downloadMenu').classList.remove('active');
+        });
+
+        document.getElementById('btnExportCSV').addEventListener('click', () => {
+            const data = getCurrentData();
+            let csv = 'Truc,Nivell,' + data.sessions.join(',') + '\n';
+            data.tricks.forEach(t => {
+                const level = {'facil': 'Fàcil', 'mitja': 'Mitjà', 'dificil': 'Difícil'}[t.level || 'mitja'];
+                let row = t.name + ',' + level;
+                data.sessions.forEach(s => row += ',' + (t.attempts[s] || '—'));
+                csv += row + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `trucs-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            document.getElementById('downloadMenu').classList.remove('active');
+        });
+
+        document.getElementById('btnImport').addEventListener('click', () => {
+            document.getElementById('importFile').click();
+        });
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    if (file.name.endsWith('.json')) {
+                        window.allData = JSON.parse(ev.target.result);
+                        window.saveToFirebase();
+                        refreshUI();
+                        alert('Importat!');
+                    }
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+            document.getElementById('downloadMenu').classList.remove('active');
+        });
+
+        document.getElementById('btnAddTrick').addEventListener('click', () => {
+            openModal('addTrickModal');
+            document.getElementById('trickNameInput').value = '';
+            document.getElementById('trickNameInput').focus();
+        });
+
+        document.getElementById('btnAddSession').addEventListener('click', () => {
+            openModal('addSessionModal');
+            document.getElementById('sessionNameInput').value = '';
+            document.getElementById('sessionNameInput').focus();
+        });
+
+        document.getElementById('btnCancelTrick').addEventListener('click', () => closeModal('addTrickModal'));
+        document.getElementById('btnCancelSession').addEventListener('click', () => closeModal('addSessionModal'));
+        document.getElementById('btnCancelSkater').addEventListener('click', () => closeModal('addSkaterModal'));
+        document.getElementById('btnCancelEditTrick').addEventListener('click', () => closeModal('editTrickModal'));
+        document.getElementById('btnCancelEditSession').addEventListener('click', () => closeModal('editSessionModal'));
+
+        document.getElementById('btnConfirmTrick').addEventListener('click', () => {
+            const name = document.getElementById('trickNameInput').value.trim();
+            const level = document.getElementById('trickLevelSelect').value;
+            const group = document.getElementById('trickGroupSelect').value;
+            if (name) {
+                getCurrentData().tricks.push({ name, level, group, attempts: {} });
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+                closeModal('addTrickModal');
+            }
+        });
+
+        document.getElementById('btnConfirmSession').addEventListener('click', () => {
+            const name = document.getElementById('sessionNameInput').value.trim();
+            if (name) {
+                getCurrentData().sessions.push(name);
+                window.saveToFirebase();
+                renderTable();
+                closeModal('addSessionModal');
+            }
+        });
+
+        document.getElementById('btnConfirmEditTrick').addEventListener('click', () => {
+            const name = document.getElementById('editTrickNameInput').value.trim();
+            const level = document.getElementById('editTrickLevelSelect').value;
+            const group = document.getElementById('editTrickGroupSelect').value;
+            if (name && currentEditTrickIndex !== null) {
+                getCurrentData().tricks[currentEditTrickIndex].name = name;
+                getCurrentData().tricks[currentEditTrickIndex].level = level;
+                getCurrentData().tricks[currentEditTrickIndex].group = group;
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+                closeModal('editTrickModal');
+                currentEditTrickIndex = null;
+            }
+        });
+
+        document.getElementById('btnDeleteTrickFromModal').addEventListener('click', () => {
+            if (currentEditTrickIndex !== null) {
+                const name = getCurrentData().tricks[currentEditTrickIndex].name;
+                if (confirm(`Eliminar "${name}"?`)) {
+                    getCurrentData().tricks.splice(currentEditTrickIndex, 1);
+                    window.saveToFirebase();
+                    renderTable();
+                    renderSummary();
+                    closeModal('editTrickModal');
+                    currentEditTrickIndex = null;
+                }
+            }
+        });
+
+        document.getElementById('btnConfirmEditSession').addEventListener('click', () => {
+            const name = document.getElementById('editSessionNameInput').value.trim();
+            if (name && currentEditSessionIndex !== null) {
+                const oldName = getCurrentData().sessions[currentEditSessionIndex];
+                getCurrentData().sessions[currentEditSessionIndex] = name;
+                // Actualitzar referències als intents
+                getCurrentData().tricks.forEach(trick => {
+                    if (trick.attempts[oldName]) {
+                        trick.attempts[name] = trick.attempts[oldName];
+                        delete trick.attempts[oldName];
+                    }
+                });
+                window.saveToFirebase();
+                renderTable();
+                renderSummary();
+                closeModal('editSessionModal');
+                currentEditSessionIndex = null;
+            }
+        });
+
+        document.getElementById('btnDeleteSessionFromModal').addEventListener('click', () => {
+            if (currentEditSessionIndex !== null) {
+                const name = getCurrentData().sessions[currentEditSessionIndex];
+                if (confirm(`Eliminar "${name}"?`)) {
+                    getCurrentData().sessions.splice(currentEditSessionIndex, 1);
+                    getCurrentData().tricks.forEach(t => delete t.attempts[name]);
+                    window.saveToFirebase();
+                    renderTable();
+                    renderSummary();
+                    closeModal('editSessionModal');
+                    currentEditSessionIndex = null;
+                }
+            }
+        });
+
+        document.getElementById('btnConfirmSkater').addEventListener('click', () => {
+            const name = document.getElementById('skaterNameInput').value.trim();
+            const age = document.getElementById('skaterAgeInput').value;
+            if (name) {
+                const id = 'skater_' + Date.now();
+                window.allData.skaters[id] = {
+                    name: name,
+                    age: age ? parseInt(age) : null,
+                    sessions: ['Sessió 1'],
+                    tricks: []
+                };
+                window.allData.currentSkater = id;
+                window.saveToFirebase();
+                updateSkaterList();
+                renderTable();
+                renderSummary();
+                closeModal('addSkaterModal');
+            }
+        });
+
+        // Enter per confirmar
+        document.getElementById('trickNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('btnConfirmTrick').click();
+        });
+
+        document.getElementById('sessionNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('btnConfirmSession').click();
+        });
+
+        document.getElementById('skaterNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('skaterAgeInput').focus();
+        });
+
+        document.getElementById('skaterAgeInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('btnConfirmSkater').click();
+        });
+
+        // Tancar modal amb ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Tancar modal clicant fora
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Tancar menú clicant fora
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.download-button') && !e.target.closest('#downloadMenu')) {
+                document.getElementById('downloadMenu').classList.remove('active');
+            }
+        });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // Inicialitzar
+        setTimeout(() => {
+            updateSkaterList();
+            renderTable();
+            renderSummary();
+        }, 500);
+    </script>
+</body>
+</html>
