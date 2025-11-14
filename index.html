@@ -1134,7 +1134,7 @@
                 ctx.fillStyle = '#9CA3AF';
                 ctx.font = '16px -apple-system';
                 ctx.textAlign = 'center';
-                ctx.fillText('Afegeix dades per veure l anàlisi', centerX, centerY);
+                ctx.fillText('Afegeix dades per veure analisi', centerX, centerY);
             }
         }
 
@@ -1189,7 +1189,7 @@
         document.getElementById('btnDeleteSkater').addEventListener('click', () => {
             const skaterCount = Object.keys(window.allData.skaters).length;
             if (skaterCount <= 1) {
-                alert('No pots eliminar l únic skater!');
+                alert('No pots eliminar unic skater!');
                 return;
             }
             const currentSkater = window.allData.skaters[window.allData.currentSkater];
