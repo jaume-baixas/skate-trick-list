@@ -955,7 +955,7 @@
             const summaryDiv = document.getElementById('summary');
             
             let html = '<h2>📊 Resum de Progressos</h2>';
-            html += '<div class="summary-overall"><h3>📈 Mitjana d Intents per Truc</h3>';
+            html += '<div class="summary-overall"><h3>📈 Mitjana Intents per Truc</h3>';
             
             if (data.tricks.length > 0) {
                 data.tricks.forEach(trick => {
@@ -991,7 +991,9 @@
             html += '<div class="chart-sessions"><h3>📅 Progressió per Sessions</h3>';
             html += '<div style="overflow-x:auto"><table class="chart-table"><thead><tr><th>Truc</th>';
             
-            data.sessions.forEach(s => html += '<th>' + s + '</th>');
+            data.sessions.forEach(s => {
+                html += '<th>' + s + '</th>';
+            });
             html += '</tr></thead><tbody>';
             
             data.tricks.forEach(trick => {
